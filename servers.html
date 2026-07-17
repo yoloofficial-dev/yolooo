@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximerix | Servers</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .servers-page-title { font-size: 28px; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 12px; }
+        .servers-page-title i { color: var(--primary-color); }
+
+        .filter-bar {
+            background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 16px;
+            padding: 12px 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;
+        }
+        .filter-bar input {
+            background: transparent; border: none; color: var(--text-main); font-family: inherit;
+            font-size: 14px; flex: 1; min-width: 150px;
+        }
+        .filter-bar input:focus { outline: none; }
+        
+        .filter-bar select {
+            background: transparent; border: 1px solid rgba(255,255,255,0.05); color: var(--text-muted);
+            font-family: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+        }
+        .filter-bar select:focus { outline: none; border-color: var(--primary-color); }
+        .filter-controls { display: flex; gap: 10px; }
+
+        /* FIX: constrain grid to container width and let columns shrink properly */
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            width: 100%;
+        }
+
+        .server-card {
+            background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 16px;
+            padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; transition: 0.2s ease;
+            min-width: 0; /* FIX: prevent flex/grid item from growing past its track due to unbreakable inline content */
+            overflow: hidden; /* FIX: belt-and-suspenders clip against any stray overflowing content */
+        }
+        .server-card:hover { border-color: rgba(0, 245, 147, 0.4); transform: translateY(-3px); }
+
+        .card-row-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .card-rank { font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 25px; flex-shrink: 0; }
+        .card-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--primary-color); flex-shrink: 0; }
+        .card-name { font-size: 15px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        .card-players { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
+        .card-row-middle { display: flex; flex-direction: column; gap: 4px; margin-left: 38px; min-width: 0; }
+        /* FIX: card-motd needs min-width:0 (it's not a flex item itself here, but its parent chain
+           needs the constraint) and the inner spans must not force intrinsic width beyond the card */
+        .card-motd {
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .card-motd span { display: inline; }
+        .card-ip { font-size: 12px; color: #999; display: flex; align-items: center; justify-content: space-between; padding-right: 10px; min-width: 0; }
+        .card-ip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .copy-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; transition: 0.2s; flex-shrink: 0; }
+        .copy-btn:hover { color: var(--primary-color); background: rgba(255,255,255,0.05); }
+
+        .card-row-bottom { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 38px; }
+        .tag { font-size: 10px; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; font-weight: 600; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); white-space: nowrap; }
+        .tag.java { background: rgba(0, 230, 118, 0.15); color: var(--primary-color); border-color: rgba(0, 230, 118, 0.2); }
+        .tag.bedrock { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border-color: rgba(59, 130, 246, 0.2); }
+
+        #scrollLoader { width: 100%; display: flex; justify-content: center; padding: 20px 0 40px 0; color: var(--text-muted); font-size: 14px; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.05); border-top: 3px solid var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 1024px) { .servers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 600px) { .servers-grid { grid-template-columns: minmax(0, 1fr); } .filter-bar { flex-direction: column; align-items: stretch; } .filter-controls { flex-direction: column; } .card-row-middle, .card-row-bottom { margin-left: 0; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand"><img src="logo.png" alt="Logo" class="header-logo"></div>
+        <nav class="nav-links">
+            <a href="index.html">HOME</a>
+            <a href="status.html">STATUS</a>
+            <a href="servers.html" class="active">SERVERS</a>
+            <a href="stats.html">STATS</a>
+        </nav>
+        <a href="https://mcserverhost.com" target="_blank" class="header-cta"><i class="fas fa-arrow-right"></i> WEBSITE</a>
+    </header>
+
+    <main>
+        <div class="servers-page-title"><i class="fas fa-server"></i> Server List</div>
+
+        <div class="filter-bar">
+            <i class="fas fa-search" style="color:var(--text-muted);"></i>
+            <input type="text" id="searchInput" placeholder="Search servers...">
+            
+            <div class="filter-controls">
+                <select id="tagFilter">
+                    <option value="all">All Tags</option>
+                    <option value="Survival">Survival</option>
+                    <option value="Skyblock">Skyblock</option>
+                    <option value="PvP">PvP</option>
+                    <option value="Factions">Factions</option>
+                    <option value="Creative">Creative</option>
+                    <option value="Minigames">Minigames</option>
+                </select>
+                
+                <select id="platformFilter">
+                    <option value="all">All Versions</option>
+                    <option value="Java">Java</option>
+                    <option value="Bedrock">Bedrock</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="servers-grid" id="serversGrid">
+            <p style="color:var(--text-muted); text-align:center; padding:40px; grid-column:1/-1;">Loading servers...</p>
+        </div>
+
+        <div id="scrollLoader">
+            <div class="spinner" id="loadingSpinner"></div>
+            <span id="loaderText">Scroll down to load more...</span>
+        </div>
+    </main>
+
+    <footer>
+        <span>Copyright &copy; 2026. All rights reserved.</span>
+        <span>Credits to Maxim75000</span>
+        <span>Not an official MCServerlist Inc. service.</span>
+    </footer>
+
+    <script>
+        let fullServerData = [];
+        let filteredServerData = [];
+        let visibleCount = 12;
+        let isLoading = false;
+        let isEndOfList = false;
+        let searchTimeout = null; // For debouncing
+
+        const grid = document.getElementById('serversGrid');
+        const loaderText = document.getElementById('loaderText');
+        const spinner = document.getElementById('loadingSpinner');
+
+        const ipSuffixes = ['mcserverhost.com', 'maximerix.dev', 'cloudmc.net'];
+
+        /* --- MINECRAFT COLOR PARSER --- */
+        function parseMotd(raw) {
+            if (!raw) return '';
+            let str = raw.replace(/&([0-9a-fk-or])/gi, '§$1');
+            const colorMap = {
+                '0': '#000000', '1': '#0000AA', '2': '#00AA00', '3': '#00AAAA',
+                '4': '#AA0000', '5': '#AA00AA', '6': '#FFAA00', '7': '#AAAAAA',
+                '8': '#555555', '9': '#5555FF', 'a': '#55FF55', 'b': '#55FFFF',
+                'c': '#FF5555', 'd': '#FF55FF', 'e': '#FFFF55', 'f': '#FFFFFF',
+                'r': 'inherit', 'l': 'bold', 'k': 'none', 'm': 'none', 'n': 'none', 'o': 'italic'
+            };
+            let result = '';
+            let i = 0;
+            let openTags = [];
+            const closeLastSpan = () => { if (openTags.length > 0) { result += '</span>'; openTags.pop(); } };
+            while (i < str.length) {
+                if (str[i] === '§' && i + 1 < str.length) {
+                    const code = str[i + 1].toLowerCase();
+                    const style = colorMap[code];
+                    if (style) {
+                        i += 2;
+                        if (code === 'r') { while (openTags.length > 0) { result += '</span>'; openTags.pop(); } continue; }
+                        if (code === 'l' || code === 'o' || code === 'n' || code === 'm' || code === 'k') {
+                            if (openTags.length > 0) { result += '</span>'; openTags.pop(); }
+                            let styleAttr = '';
+                            if (code === 'l') styleAttr = 'font-weight: bold;';
+                            else if (code === 'o') styleAttr = 'font-style: italic;';
+                            else if (code === 'n') styleAttr = 'text-decoration: underline;';
+                            else if (code === 'm') styleAttr = 'text-decoration: line-through;';
+                            result += `<span style="${styleAttr}">`; openTags.push('format'); continue;
+                        }
+                        if (openTags.length > 0) { result += '</span>'; openTags.pop(); }
+                        result += `<span style="color: ${style};">`; openTags.push('color'); continue;
+                    }
+                }
+                result += str[i]; i++;
+            }
+            while (openTags.length > 0) { result += '</span>'; openTags.pop(); }
+            return result;
+        }
+
+        function generateMockIp(name) {
+            const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return `${cleanName || 'server'}.${ipSuffixes[Math.floor(Math.random() * ipSuffixes.length)]}`;
+        }
+
+        function renderServers(serversToRender, append = false) {
+            if (!append) grid.innerHTML = ''; 
+            
+            let html = '';
+            serversToRender.forEach((server, index) => {
+                const name = server.display_name || server.name || 'Unnamed';
+                const players = server.players || 0;
+                const tags = Array.isArray(server.tags) ? server.tags : (typeof server.tags === 'string' ? server.tags.split(',').map(t => t.trim()) : []);
+                const platform = server.platform || server.version || 'Java';
+                
+                const motd = parseMotd(server.motd || 'A Minecraft Server');
+                const ip = generateMockIp(name);
+                const globalRank = filteredServerData.indexOf(server) + 1;
+
+                let tagClass = '';
+                if (platform.toLowerCase().includes('java')) tagClass = 'java';
+                else if (platform.toLowerCase().includes('bedrock')) tagClass = 'bedrock';
+
+                const iconChar = name.charAt(0).toUpperCase();
+
+                html += `
+                    <div class="server-card" data-name="${name.toLowerCase()}">
+                        <div class="card-row-top">
+                            <div class="card-rank">#${globalRank}</div>
+                            <div class="card-icon">${iconChar}</div>
+                            <div class="card-name">${name}</div>
+                            <div class="card-players"><i class="fas fa-users"></i> ${players}</div>
+                        </div>
+                        
+                        <div class="card-row-middle">
+                            <div class="card-motd">${motd}</div>
+                            <div class="card-ip">
+                                <span>${ip}</span>
+                                <button class="copy-btn" onclick="copyIP('${ip}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-row-bottom">
+                            ${tags.slice(0, 2).map(t => `<span class="tag">${t}</span>`).join('')}
+                            <span class="tag ${tagClass}">${platform}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (!append) grid.innerHTML = html;
+            else grid.insertAdjacentHTML('beforeend', html);
+        }
+
+        async function fetchAndFilter() {
+            if (fullServerData.length > 0) {
+                applyFilters();
+                return;
+            }
+
+            grid.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:40px; grid-column:1/-1;">Loading servers...</p>';
+            try {
+                const response = await fetch('https://api.maximerix.dev/mcsh/servers');
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const data = await response.json();
+                
+                fullServerData = data.servers || data;
+                if (!Array.isArray(fullServerData) || fullServerData.length === 0) {
+                    grid.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:40px; grid-column:1/-1;">No servers found.</p>';
+                    return;
+                }
+                
+                applyFilters();
+            } catch (error) {
+                grid.innerHTML = '<p style="color:#ff5252; text-align:center; padding:40px; grid-column:1/-1;">Failed to load servers.</p>';
+            }
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedTag = document.getElementById('tagFilter').value;
+            const selectedPlatform = document.getElementById('platformFilter').value;
+
+            filteredServerData = fullServerData.filter(server => {
+                const name = (server.display_name || server.name || '').toLowerCase();
+                const tags = Array.isArray(server.tags) ? server.tags : [];
+                const platform = server.platform || server.version || '';
+
+                const matchesSearch = name.includes(searchTerm);
+                const matchesTag = selectedTag === 'all' || tags.includes(selectedTag);
+                const matchesPlatform = selectedPlatform === 'all' || platform.includes(selectedPlatform) || (selectedPlatform === 'Java' && platform.includes('Java'));
+                
+                return matchesSearch && matchesTag && matchesPlatform;
+            });
+
+            visibleCount = 12;
+            isEndOfList = false;
+            loaderText.innerText = filteredServerData.length > 12 ? 'Scroll down to load more...' : 'No more servers.';
+            spinner.style.display = 'none';
+
+            renderServers(filteredServerData.slice(0, visibleCount));
+            checkScroll();
+        }
+
+        function checkScroll() {
+            if (isLoading || isEndOfList) return;
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const threshold = document.documentElement.scrollHeight - 200;
+
+            if (scrollPosition >= threshold) {
+                isLoading = true;
+                spinner.style.display = 'block';
+                loaderText.innerText = 'Loading...';
+
+                setTimeout(() => {
+                    const remaining = filteredServerData.length - visibleCount;
+                    if (remaining <= 0) {
+                        isEndOfList = true;
+                        spinner.style.display = 'none';
+                        loaderText.innerText = 'All servers loaded.';
+                        isLoading = false;
+                        return;
+                    }
+                    const nextBatch = Math.min(12, remaining);
+                    const newData = filteredServerData.slice(visibleCount, visibleCount + nextBatch);
+                    visibleCount += nextBatch;
+                    renderServers(newData, true);
+                    spinner.style.display = 'none';
+                    loaderText.innerText = filteredServerData.length > visibleCount ? 'Scroll for more...' : 'All loaded.';
+                    isLoading = false;
+                }, 600);
+            }
+        }
+
+        // --- DEBOUNCED SEARCH LISTENER ---
+        function attachSearchListeners() {
+            const searchInput = document.getElementById('searchInput');
+            const tagFilter = document.getElementById('tagFilter');
+            const platformFilter = document.getElementById('platformFilter');
+
+            // Remove any previous listeners to prevent stacking
+            const newSearch = searchInput.cloneNode(true);
+            const newTag = tagFilter.cloneNode(true);
+            const newPlatform = platformFilter.cloneNode(true);
+            searchInput.parentNode.replaceChild(newSearch, searchInput);
+            tagFilter.parentNode.replaceChild(newTag, tagFilter);
+            platformFilter.parentNode.replaceChild(newPlatform, platformFilter);
+
+            // Apply DEBOUNCE to the search input
+            newSearch.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300); // Wait 300ms after user stops typing
+            });
+
+            newTag.addEventListener('change', applyFilters);
+            newPlatform.addEventListener('change', applyFilters);
+        }
+
+        function copyIP(ip) {
+            navigator.clipboard.writeText(ip).then(() => {
+                alert(`IP ${ip} copied!`);
+            }).catch(() => {
+                const textArea = document.createElement("textarea");
+                textArea.value = ip;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert(`IP ${ip} copied!`);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndFilter();
+            window.addEventListener('scroll', checkScroll);
+            window.addEventListener('resize', checkScroll);
+            
+            // Attach listeners AFTER the initial render
+            setTimeout(attachSearchListeners, 100);
+        });
+    </script>
+</body>
+</html>

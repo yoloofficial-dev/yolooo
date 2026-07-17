@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yolooo | System Status</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* --- ALERT BANNER --- */
+        .service-alert-banner {
+            display: none;
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            color: #ff5252;
+            font-weight: 600;
+            align-items: center;
+            gap: 12px;
+        }
+        .service-alert-banner.active { display: flex; }
+
+        /* --- SERVICES GRID --- */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .service-card {
+            background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass); border-radius: 16px;
+            padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; transition: 0.2s;
+        }
+        .service-card:hover { border-color: rgba(0, 245, 147, 0.4); transform: translateY(-2px); }
+        .service-top { display: flex; justify-content: space-between; align-items: center; }
+        .service-name { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .service-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .service-dot.online { background: var(--primary-color); box-shadow: 0 0 10px rgba(0, 245, 147, 0.3); }
+        .service-dot.offline { background: #ff5252; }
+        .service-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+        .service-latency { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        /* --- NODE GRID --- */
+        .region-header { 
+            background: var(--bg-card); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid var(--border-glass); 
+            border-radius: 16px; 
+            padding: 16px 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            border-left: 4px solid var(--primary-color); 
+            transition: all 0.3s ease;
+        }
+        
+        /* GLOWING RED STATE (If ANY node in the location is over 80%) */
+        .region-header.danger-zone {
+            border-left: 4px solid #ff5252;
+            background: rgba(255, 82, 82, 0.08);
+            border-color: rgba(255, 82, 82, 0.3);
+            box-shadow: 0 0 30px rgba(255, 82, 82, 0.15), inset 0 0 20px rgba(255, 82, 82, 0.05);
+        }
+        .region-header.danger-zone h2 {
+            color: #ff5252;
+        }
+        .region-header.danger-zone .region-left p {
+            color: #ff8a8a;
+        }
+
+        .region-left { display: flex; align-items: center; gap: 12px; }
+        .region-left h2 { font-size: 18px; font-weight: 700; color: var(--text-main); transition: color 0.3s ease;}
+        .region-left p { font-size: 13px; color: var(--text-muted); transition: color 0.3s ease;}
+
+        .load-warning-badge {
+            display: none;
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            margin-left: 10px;
+            text-transform: uppercase;
+        }
+        .region-header.danger-zone .load-warning-badge {
+            display: inline-block;
+        }
+
+        .node-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+        .node-card { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border-glass); border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; transition: 0.2s; }
+        .node-card:hover { border-color: rgba(0, 245, 147, 0.5); transform: translateY(-2px); }
+        .node-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+        .node-name { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
+        .node-name i { color: var(--primary-color); font-size: 16px; }
+        .node-name span { font-size: 13px; color: var(--text-muted); font-weight: 400; }
+        
+        .node-stats { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+        .stat-row { display: flex; align-items: center; gap: 8px; }
+        .stat-row .label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); width: 80px; }
+        .stat-row .label i { font-size: 12px; }
+        .progress-track { flex: 1; height: 5px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+        .progress-fill.green { background: var(--primary-color); }
+        .progress-fill.red { background: #ff5252; }
+        .progress-fill.yellow { background: #ffc107; }
+        .stat-row .val { font-size: 12px; font-weight: 600; min-width: 25px; text-align: right; }
+
+        /* --- LANDSCAPE MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: var(--bg-card); border: 1px solid var(--border-glass);
+            border-radius: 16px; width: 90%; max-width: 900px;
+            max-height: 90vh; display: flex; flex-direction: row; padding: 25px; position: relative;
+            animation: fadeUp 0.3s ease-out;
+        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .modal-left { width: 50%; padding-right: 20px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 20px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .modal-node-info h2 { font-size: 26px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+        .modal-node-info h2 i { color: var(--primary-color); }
+        .modal-node-info .loc { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 14px; color: var(--text-main); }
+        .modal-close { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; transition: 0.2s; }
+        .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        /* --- AVAILABILITY TABLE --- */
+        .stats-table {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .stats-cell {
+            padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.02);
+        }
+        .stats-cell:nth-last-child(1), .stats-cell:nth-last-child(2) { border-bottom: none; }
+        .stats-cell span:first-child { color: var(--text-muted); font-size: 14px; }
+        .stats-cell span:last-child { font-weight: 600; font-size: 14px; }
+        .stats-cell span.green { color: var(--primary-color); }
+        .stats-cell span.yellow { color: #ffc107; }
+
+        /* --- HISTORY DOTS & INCIDENTS --- */
+        .modal-history-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .history-dot { 
+            width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 11px; color: #0b0e1a;
+        }
+        .history-dot.green { background: var(--primary-color); }
+        .history-dot.red { background: #ff5252; }
+        .day-label { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 2px; }
+
+        .modal-right { width: 50%; padding-left: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; max-height: 80vh; }
+        .modal-right-title { font-size: 16px; font-weight: 600; color: var(--text-muted); }
+
+        .incident-row { background: rgba(255,82,82,0.05); border: 1px solid rgba(255,82,82,0.2); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+        .incident-row i { color: #ff5252; font-size: 16px; }
+        .incident-row .duration { font-weight: 700; font-size: 15px; }
+        .incident-row .time { color: var(--text-muted); font-size: 14px; }
+
+        @media (max-width: 1024px) { .services-grid, .node-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { 
+            .modal-box { flex-direction: column; height: auto; }
+            .modal-left, .modal-right { width: 100%; padding: 0; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
+            .modal-right { padding-top: 15px; max-height: none; border-bottom: none; }
+            .stats-table { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand"><img src="logo.png" alt="Logo" class="header-logo"></div>
+        <nav class="nav-links">
+            <a href="index.html">HOME</a>
+            <a href="status.html" class="active">STATUS</a>
+            <a href="servers.html">SERVERS</a>
+            <a href="stats.html">STATS</a>
+        </nav>
+        <a href="https://mcserverhost.com" target="_blank" class="header-cta"><i class="fas fa-arrow-right"></i> WEBSITE</a>
+    </header>
+
+    <main>
+        <div class="page-title">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Status</span>
+        </div>
+
+        <div class="service-alert-banner" id="alertBanner">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>One or more services are currently experiencing issues.</span>
+        </div>
+
+        <div class="services-grid" id="servicesGrid"></div>
+
+        <div id="statusContent"></div>
+    </main>
+
+    <footer>
+        <span>Copyright &copy; 2026. All rights reserved.</span>
+        <span>Credits to Maxim75000</span>
+        <span>Not an official MCServerlist Inc. service.</span>
+    </footer>
+
+    <div class="modal-overlay" id="nodeModal">
+        <div class="modal-box">
+            <div class="modal-left">
+                <div class="modal-header">
+                    <div class="modal-node-info">
+                        <h2><i class="fas fa-circle" style="color:var(--primary-color);"></i> <span id="modalNodeName">Node Name</span></h2>
+                        <div class="loc">
+                            <img id="modalNodeFlag" src="" alt="Flag" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover; margin-right: 4px;">
+                            <span id="modalNodeLocation">Location</span>
+                        </div>
+                    </div>
+                    <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="stats-table" id="modalStatsTable"></div>
+                <div class="modal-history-row" id="modalHistoryRow"></div>
+            </div>
+
+            <div class="modal-right">
+                <div class="modal-right-title">Recent Incidents</div>
+                <div id="modalIncidents"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allNodesData = [];
+
+        const staticServiceData = [
+            { name: "Main Website", description: "Website hosting and frontend services", url: "https://mcserverhost.com" },
+            { name: "MCServerHost API", description: "Server management and backend infrastructure", url: "https://api.mcserverhost.com" },
+            { name: "Cloudflare API", description: "Global CDN, DDoS protection, and DNS services", url: "https://api.cloudflare.com" },
+            { name: "Stripe API", description: "Credit card and subscription payment processing", url: "https://api.stripe.com" },
+            { name: "PayPal API", description: "Digital wallet, invoicing, and online payment processing", url: "https://api.paypal.com" },
+            { name: "Solana API", description: "Blockchain network and cryptocurrency transactions", url: "https://api.mainnet-beta.solana.com" }
+        ];
+
+        async function loadStatusData() {
+            const contentDiv = document.getElementById('statusContent');
+            const servicesDiv = document.getElementById('servicesGrid');
+            const alertBanner = document.getElementById('alertBanner');
+            
+            contentDiv.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:40px;">Fetching data...</div>';
+            servicesDiv.innerHTML = '';
+
+            try {
+                const [liveResponse, historyResponse] = await Promise.all([
+                    fetch('https://api.mcserverhost.com/status'),
+                    fetch('https://api.maximerix.dev/mcsh/outages/data')
+                ]);
+
+                if (!liveResponse.ok) throw new Error('Live API error');
+                if (!historyResponse.ok) throw new Error('History API error');
+
+                const liveData = await liveResponse.json();
+                const historyData = await historyResponse.json();
+
+                const nodes = liveData.nodes || [];
+                const apiServices = liveData.services || [];
+
+                // 1. RENDER SERVICES
+                let sHtml = '';
+                let isDown = false;
+                staticServiceData.forEach(staticSvc => {
+                    const liveSvc = apiServices.find(s => s.url === staticSvc.url);
+                    const isOnline = liveSvc ? liveSvc.status === 'online' : false;
+                    const statusClass = isOnline ? 'online' : 'offline';
+                    const latency = liveSvc && liveSvc.latency_ms ? Math.round(liveSvc.latency_ms) + 'ms' : '--';
+                    if (!isOnline) isDown = true;
+
+                    sHtml += `
+                        <div class="service-card">
+                            <div class="service-top">
+                                <div class="service-name"><span class="service-dot ${statusClass}"></span> ${staticSvc.name}</div>
+                                <div class="service-latency">${latency}</div>
+                            </div>
+                            <div class="service-desc">${staticSvc.description}</div>
+                        </div>
+                    `;
+                });
+                servicesDiv.innerHTML = sHtml;
+                isDown ? alertBanner.classList.add('active') : alertBanner.classList.remove('active');
+
+                // 2. RENDER NODES (MERGED DATA)
+                if (!nodes || nodes.length === 0) {
+                    contentDiv.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:40px;">No nodes found.</div>`;
+                    return;
+                }
+
+                let html = '';
+                const locationConfig = {
+                    'free.frankfurt': { flag: 'uk.png', displayName: 'London, England' },
+                    'free.newyork': { flag: 'us.png', displayName: 'New York, USA' },
+                    'free.singapore': { flag: 'sg.png', displayName: 'Singapore, Asia' }
+                };
+                const order = ['free.frankfurt', 'free.newyork', 'free.singapore'];
+
+                allNodesData = [];
+
+                for (const locKey of order) {
+                    const locNodes = nodes.filter(node => node.location === locKey);
+                    if (locNodes.length === 0) continue;
+
+                    const config = locationConfig[locKey];
+                    const flagFile = config ? config.flag : '';
+                    const displayName = config ? config.displayName : locKey.replace('free.', '');
+
+                    // --- DETERMINE IF THE REGION SHOULD GLOW RED ---
+                    let isDangerZone = false;
+                    let dangerReason = "";
+
+                    // Check 1: Is the location empty?
+                    if (locNodes.length === 0) {
+                        isDangerZone = true;
+                        dangerReason = "No Nodes Found";
+                    } else {
+                        // Check 2: Is ANY node in this location over 80% on CPU, Memory OR Disk?
+                        locNodes.forEach(node => {
+                            const cpu = node.cpu_percent ?? 0;
+                            const ram = node.ram_percent ?? 0;
+                            const disk = node.disk_percent ?? 0;
+                            
+                            // If any of these are over 80%, flag the whole region
+                            if (cpu > 80 || ram > 80 || disk > 80) {
+                                isDangerZone = true;
+                                dangerReason = "High Resource Usage";
+                            }
+                        });
+                    }
+
+                    html += `
+                        <div class="region-header ${isDangerZone ? 'danger-zone' : ''}">
+                            <div class="region-left">
+                                ${flagFile ? `<img src="assets/${flagFile}" alt="${locKey}" style="width: 24px; height: 16px; border-radius: 2px; object-fit: cover;">` : ''}
+                                <div>
+                                    <h2>${displayName} <span class="load-warning-badge"><i class="fas fa-triangle-exclamation"></i> ${dangerReason}</span></h2>
+                                    <p>${locNodes.length} nodes monitored</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="node-grid">
+                    `;
+
+                    locNodes.forEach(node => {
+                        const nodeName = node.node_name ? node.node_name.split('.')[0] : 'Unknown';
+                        const isOnline = node.status === 'online';
+                        const cpu = Math.round(node.cpu_percent || 0);
+                        const ram = Math.round(node.ram_percent || 0);
+                        const disk = Math.round(node.disk_percent || 0);
+                        const latency = node.latency_ms ? Math.round(node.latency_ms) : '--';
+
+                        // MERGE HISTORY DATA
+                        let historyNode = null;
+                        let incidents = [];
+                        let uptimeOverall = '--';
+                        let isFull = false;
+
+                        if (historyData.regions) {
+                            for (const region of historyData.regions) {
+                                const found = region.nodes?.find(n => 
+                                    n.name.toLowerCase() === nodeName.toLowerCase()
+                                );
+                                if (found) {
+                                    historyNode = found;
+                                    incidents = found.incidentEvents90d || [];
+                                    uptimeOverall = found.uptimeOverall || '--';
+                                    isFull = found.isFull || false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        const colorClass = (val) => val > 75 ? 'red' : (val > 50 ? 'yellow' : 'green');
+                        const statusColor = isOnline ? 'var(--primary-color)' : '#ff5252';
+
+                        allNodesData.push({ 
+                            name: nodeName, 
+                            displayName: nodeName, 
+                            regionDisplay: displayName,
+                            isOnline, 
+                            cpu, 
+                            ram, 
+                            disk, 
+                            latency, 
+                            flagFile, 
+                            incidents,
+                            uptimeOverall,
+                            isFull
+                        });
+
+                        html += `
+                            <div class="node-card" onclick="openModal('${nodeName}')">
+                                <div class="node-top">
+                                    <div class="node-name">
+                                        <i class="fas ${isOnline ? 'fa-circle' : 'fa-circle'}" style="color:${statusColor};"></i> 
+                                        ${nodeName}
+                                        <span>${latency}ms</span>
+                                    </div>
+                                    <div style="font-weight:600; font-size:14px; color:${statusColor};">${isOnline ? 'Online' : 'Offline'}</div>
+                                </div>
+                                <div class="node-stats">
+                                    <div class="stat-row"><div class="label"><i class="fas fa-microchip"></i> CPU</div><div class="progress-track"><div class="progress-fill ${colorClass(cpu)}" style="width: ${cpu}%;"></div></div><div class="val">${cpu}%</div></div>
+                                    <div class="stat-row"><div class="label"><i class="fas fa-memory"></i> Memory</div><div class="progress-track"><div class="progress-fill ${colorClass(ram)}" style="width: ${ram}%;"></div></div><div class="val">${ram}%</div></div>
+                                    <div class="stat-row"><div class="label"><i class="fas fa-hdd"></i> Disk</div><div class="progress-track"><div class="progress-fill ${colorClass(disk)}" style="width: ${disk}%;"></div></div><div class="val">${disk}%</div></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div>`;
+                }
+
+                contentDiv.innerHTML = html;
+
+            } catch (error) {
+                console.error('❌ Fetch Error:', error);
+                contentDiv.innerHTML = `<div style="color:#ff5252; text-align:center; padding:40px;">Failed to load data: ${error.message}</div>`;
+            }
+        }
+
+        function openModal(nodeName) {
+            const nodeData = allNodesData.find(n => n.name === nodeName);
+            
+            if (!nodeData) {
+                console.error("Could not find node data for:", nodeName);
+                return;
+            }
+
+            document.getElementById('modalNodeName').innerText = nodeData.displayName.charAt(0).toUpperCase() + nodeData.displayName.slice(1);
+            document.getElementById('modalNodeLocation').innerText = nodeData.regionDisplay;
+            
+            const flagImg = document.getElementById('modalNodeFlag');
+            if(nodeData.flagFile) {
+                flagImg.src = `assets/${nodeData.flagFile}`;
+                flagImg.style.display = 'inline-block';
+            } else {
+                flagImg.style.display = 'none';
+            }
+
+            const statusColor = nodeData.isOnline ? 'var(--primary-color)' : '#ff5252';
+            document.getElementById('modalStatsTable').innerHTML = `
+                <div class="stats-cell"><span>Overall uptime</span><span class="green">${nodeData.uptimeOverall}</span></div>
+                <div class="stats-cell"><span>Latency</span><span>${nodeData.latency}ms</span></div>
+                <div class="stats-cell"><span>CPU load</span><span>${nodeData.cpu}%</span></div>
+                <div class="stats-cell"><span>Memory usage</span><span>${nodeData.ram}%</span></div>
+                <div class="stats-cell"><span>Disk usage</span><span>${nodeData.disk}%</span></div>
+                <div class="stats-cell"><span>90-day downtime</span><span class="yellow">${nodeData.incidents.length > 0 ? 'Calculated by API' : '0s'}</span></div>
+                <div class="stats-cell"><span>Node full</span><span>${nodeData.isFull ? 'Yes' : 'No'}</span></div>
+                <div class="stats-cell"><span>90-day incidents</span><span>${nodeData.incidents.length}</span></div>
+                <div class="stats-cell" style="border-bottom:none;"><span>Status</span><span style="color:${statusColor};">${nodeData.isOnline ? 'Online' : 'Offline'}</span></div>
+            `;
+
+            const incidents = nodeData.incidents || [];
+            const last7Days = [];
+            for(let i=6; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                last7Days.push(d);
+            }
+
+            let historyHtml = '';
+            last7Days.forEach(day => {
+                const dayStr = day.toISOString().split('T')[0];
+                const hasIncident = incidents.some(inc => {
+                    const incDate = new Date(inc.start).toISOString().split('T')[0];
+                    return incDate === dayStr;
+                });
+                const cls = hasIncident ? 'red' : 'green';
+                const icon = hasIncident ? '<i class="fas fa-arrow-down" style="color:#0b0e1a;"></i>' : '<i class="fas fa-arrow-up" style="color:#0b0e1a;"></i>';
+                const label = day.toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
+                
+                historyHtml += `
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <div class="history-dot ${cls}">${icon}</div>
+                        <div class="day-label">${label}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('modalHistoryRow').innerHTML = historyHtml;
+
+            let incidentHtml = '';
+            if (incidents.length > 0) {
+                incidents.slice(0, 10).forEach(inc => {
+                    const durSec = inc.durationSeconds || 0;
+                    const mins = Math.floor(durSec / 60);
+                    const secs = durSec % 60;
+                    const durStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+                    const start = new Date(inc.start);
+                    const end = new Date(inc.end);
+                    const timeStr = `${start.getDate()} ${start.toLocaleString('default', { month: 'short' })} ${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')} – ${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+
+                    incidentHtml += `
+                        <div class="incident-row">
+                            <i class="fas fa-circle"></i>
+                            <div class="duration">${durStr}</div>
+                            <div class="time">${timeStr}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                incidentHtml = `<div style="color:var(--text-muted); padding:10px;">No recent incidents recorded.</div>`;
+            }
+            document.getElementById('modalIncidents').innerHTML = incidentHtml;
+
+            document.getElementById('nodeModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('nodeModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.getElementById('nodeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', loadStatusData);
+    </script>
+</body>
+</html>
