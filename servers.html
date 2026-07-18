@@ -9,6 +9,20 @@
     <link rel="stylesheet" href="style.css">
 
     <style>
+        .service-alert-banner {
+            display: none;
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            color: #ff5252;
+            font-weight: 600;
+            align-items: center;
+            gap: 12px;
+        }
+        .service-alert-banner.active { display: flex; }
+        
         .servers-page-title { font-size: 28px; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 12px; }
         .servers-page-title i { color: var(--primary-color); }
 
@@ -37,20 +51,6 @@
             margin-bottom: 40px;
             width: 100%;
         }
-
-       .service-alert-banner {
-            display: none;
-            background: rgba(255, 82, 82, 0.1);
-            border: 1px solid rgba(255, 82, 82, 0.3);
-            border-radius: 12px;
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            color: #ff5252;
-            font-weight: 600;
-            align-items: center;
-            gap: 12px;
-        }
-        .service-alert-banner.active { display: flex; }
 
         .server-card {
             background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 16px;
