@@ -123,13 +123,51 @@
             
             <div class="filter-controls">
                 <select id="tagFilter">
-                    <option value="all">All Tags</option>
-                    <option value="Survival">Survival</option>
-                    <option value="Skyblock">Skyblock</option>
+                    <option value="all">All Categories</option>
                     <option value="PvP">PvP</option>
-                    <option value="Factions">Factions</option>
+                    <option value="SMP">SMP</option>
+                    <option value="Skyblock">Skyblock</option>
                     <option value="Creative">Creative</option>
-                    <option value="Minigames">Minigames</option>
+                    <option value="Factions">Factions</option>
+                    <option value="Prison">Prison</option>
+                    <option value="Gens">Gens</option>
+                    <option value="Farming">Farming</option>
+                    <option value="Lifesteal">Lifesteal</option>
+                    <option value="Roleplay">Roleplay</option>
+                    <option value="RPG">RPG</option>
+                    <option value="Modded">Modded</option>
+                    <option value="Parkour">Parkour</option>
+                    <option value="Box">Box</option>
+                    <option value="OneBlock">OneBlock</option>
+                    <option value="Bedrock">Bedrock</option>
+                    <option value="Mining">Mining</option>
+                    <option value="Tycoon">Tycoon</option>
+                    <option value="Hardcore">Hardcore</option>
+                    <option value="Escape">Escape</option>
+                    <option value="Bedwars">Bedwars</option>
+                    <option value="Java">Java</option>
+                    <option value="India">India</option>
+                    <option value="Anarchy">Anarchy</option>
+                    <option value="Skymining">Skymining</option>
+                    <option value="Box PvP">Box PvP</option>
+                    <option value="Kit PvP">Kit PvP</option>
+                    <option value="Tower Defense">Tower Defense</option>
+                    <option value="Random Kits">Random Kits</option>
+                    <option value="Earth">Earth</option>
+                    <option value="Survival">Survival</option>
+                    <option value="Economy">Economy</option>
+                    <option value="Vanilla">Vanilla</option>
+                    <option value="Mini Games">Mini Games</option>
+                    <option value="OP">OP</option>
+                    <option value="Simulator">Simulator</option>
+                    <option value="Clicker">Clicker</option>
+                    <option value="Towny">Towny</option>
+                    <option value="McMMO">McMMO</option>
+                    <option value="PvE">PvE</option>
+                    <option value="Dungeon">Dungeon</option>
+                    <option value="Factory">Factory</option>
+                    <option value="Hub">Hub</option>
+                    <option value="Hangout">Hangout</option>
                 </select>
                 
                 <select id="platformFilter">
@@ -167,8 +205,6 @@
         const grid = document.getElementById('serversGrid');
         const loaderText = document.getElementById('loaderText');
         const spinner = document.getElementById('loadingSpinner');
-
-        const ipSuffixes = ['mcserverhost.com', 'maximerix.dev', 'cloudmc.net'];
 
         /* --- MINECRAFT COLOR PARSER --- */
         function parseMotd(raw) {
@@ -211,11 +247,6 @@
             return result;
         }
 
-        function generateMockIp(name) {
-            const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return `${cleanName || 'server'}.${ipSuffixes[Math.floor(Math.random() * ipSuffixes.length)]}`;
-        }
-
         function renderServers(serversToRender, append = false) {
             if (!append) grid.innerHTML = ''; 
             
@@ -227,7 +258,10 @@
                 const platform = server.platform || server.version || 'Java';
                 
                 const motd = parseMotd(server.motd || 'A Minecraft Server');
-                const ip = generateMockIp(name);
+                
+                // === FIX: Use the REAL server_name from the API ===
+                const ip = server.server_name || 'Unknown IP';
+
                 const globalRank = filteredServerData.indexOf(server) + 1;
 
                 let tagClass = '';
