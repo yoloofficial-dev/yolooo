@@ -21,7 +21,6 @@
             align-items: center;
             gap: 12px;
         }
-        .service-alert-banner.active { display: flex; }
         
         .servers-page-title { font-size: 28px; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 12px; }
         .servers-page-title i { color: var(--primary-color); }
@@ -37,13 +36,28 @@
         .filter-bar input:focus { outline: none; }
         
         .filter-bar select {
-            background: transparent; border: 1px solid rgba(255,255,255,0.05); color: var(--text-muted);
-            font-family: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: #1a1e2b;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a829e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            border: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 13px;
+            padding: 8px 32px 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            min-width: 140px;
+            transition: border-color 0.2s;
         }
-        .filter-bar select:focus { outline: none; border-color: var(--primary-color); }
+        .filter-bar select:hover { border-color: rgba(255,255,255,0.15); }
+        .filter-bar select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.1); }
+        .filter-bar select option { background-color: #1a1e2b; color: #f0f4ff; }
+
         .filter-controls { display: flex; gap: 10px; }
 
-        /* FIX: constrain grid to container width and let columns shrink properly */
         .servers-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -55,20 +69,27 @@
         .server-card {
             background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 16px;
             padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; transition: 0.2s ease;
-            min-width: 0; /* FIX: prevent flex/grid item from growing past its track due to unbreakable inline content */
-            overflow: hidden; /* FIX: belt-and-suspenders clip against any stray overflowing content */
+            min-width: 0;
+            overflow: hidden;
+            cursor: pointer;
         }
         .server-card:hover { border-color: rgba(0, 245, 147, 0.4); transform: translateY(-3px); }
 
         .card-row-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
         .card-rank { font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 25px; flex-shrink: 0; }
-        .card-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--primary-color); flex-shrink: 0; }
+        
+        .card-icon {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: var(--primary-color); flex-shrink: 0;
+            overflow: hidden;
+        }
+        .card-icon img { width: 100%; height: 100%; object-fit: cover; }
         .card-name { font-size: 15px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
         .card-players { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 
         .card-row-middle { display: flex; flex-direction: column; gap: 4px; margin-left: 38px; min-width: 0; }
-        /* FIX: card-motd needs min-width:0 (it's not a flex item itself here, but its parent chain
-           needs the constraint) and the inner spans must not force intrinsic width beyond the card */
         .card-motd {
             font-size: 13px;
             white-space: nowrap;
@@ -92,8 +113,118 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.05); border-top: 3px solid var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* --- PREMIUM GLASSMORPHISM MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            display: none; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: rgba(15, 18, 30, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 20px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+            border-radius: 24px; width: 90%; max-width: 600px;
+            max-height: 85vh; overflow-y: auto;
+            padding: 25px; position: relative;
+            animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-node-info h2 { 
+            font-size: 24px; font-weight: 700; 
+            color: var(--primary-color); display: flex; align-items: center; gap: 8px; 
+            background: rgba(0, 230, 118, 0.05);
+            padding: 4px 16px 4px 12px;
+            border-radius: 50px;
+            border: 1px solid rgba(0, 230, 118, 0.1);
+        }
+        .modal-node-info h2 i { color: var(--primary-color); font-size: 18px; }
+        
+        .modal-status-dot {
+            width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+            margin-right: 4px;
+        }
+        .modal-status-dot.online { background: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); }
+        .modal-status-dot.offline { background: #ff5252; }
+        .modal-status-dot.not-found { background: #ffc107; }
+
+        .modal-close {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+            color: var(--text-muted); width: 36px; height: 36px; border-radius: 50%;
+            font-size: 18px; cursor: pointer; transition: 0.2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; transform: rotate(90deg); }
+
+        .motd-widget-container {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            min-height: 60px; /* Prevents height collapse while loading */
+        }
+        .motd-widget-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* --- PLAYER SECTION --- */
+        .players-section {
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+        .players-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+        .players-header-title {
+            font-size: 13px; font-weight: 600; color: #e2e8f0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .players-header-title i { color: var(--primary-color); font-size: 14px; }
+        .players-count { color: #64748b; font-weight: 400; font-size: 13px; }
+        
+        .players-list-container {
+            max-height: 140px; overflow-y: auto; padding-right: 4px;
+        }
+        .players-list-container::-webkit-scrollbar { width: 4px; }
+        .players-list-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 2px; }
+        .players-list-container::-webkit-scrollbar-thumb { background: rgba(0, 230, 118, 0.4); border-radius: 2px; }
+        
+        .players-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+        }
+        .player-item {
+            padding: 6px 12px; background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.02);
+            border-radius: 6px; font-size: 13px; color: #cbd5e1;
+            display: flex; align-items: center; gap: 8px;
+            transition: background 0.2s;
+        }
+        .player-item:hover { background: rgba(255,255,255,0.05); border-color: rgba(0, 230, 118, 0.1); }
+        .player-item i { font-size: 6px; color: var(--primary-color); text-shadow: 0 0 4px rgba(0, 230, 118, 0.4); }
+        .no-players { color: #64748b; font-size: 13px; padding: 10px 0; }
+
         @media (max-width: 1024px) { .servers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-        @media (max-width: 600px) { .servers-grid { grid-template-columns: minmax(0, 1fr); } .filter-bar { flex-direction: column; align-items: stretch; } .filter-controls { flex-direction: column; } .card-row-middle, .card-row-bottom { margin-left: 0; } }
+        @media (max-width: 600px) { 
+            .servers-grid { grid-template-columns: minmax(0, 1fr); } 
+            .filter-bar { flex-direction: column; align-items: stretch; } 
+            .filter-controls { flex-direction: column; } 
+            .card-row-middle, .card-row-bottom { margin-left: 0; } 
+            .players-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -194,19 +325,51 @@
         <span>Not an official MCServerlist Inc. service.</span>
     </footer>
 
+    <div class="modal-overlay" id="serverModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-node-info">
+                    <h2>
+                        <span class="modal-status-dot" id="modalStatusDot"></span>
+                        <i class="fas fa-server"></i> 
+                        <span id="modalServerName">Server</span>
+                    </h2>
+                </div>
+                <button class="modal-close" onclick="closeServerModal()"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- The mcstatus.io Widget will be injected here -->
+            <div class="motd-widget-container" id="widgetContainer">
+                <div style="color:var(--text-muted); padding:20px; text-align:center; width:100%;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading widget...
+                </div>
+            </div>
+            
+            <div class="players-section">
+                <div class="players-header">
+                    <div class="players-header-title"><i class="fas fa-users"></i> Online Players</div>
+                    <div class="players-count"><span id="modalPlayersCount">0</span> Online</div>
+                </div>
+                <div class="players-list-container" id="playersContainer">
+                    <div class="players-grid" id="playersGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let fullServerData = [];
         let filteredServerData = [];
         let visibleCount = 12;
         let isLoading = false;
         let isEndOfList = false;
-        let searchTimeout = null; // For debouncing
+        let searchTimeout = null;
+        let currentModalIndex = -1;
 
         const grid = document.getElementById('serversGrid');
         const loaderText = document.getElementById('loaderText');
         const spinner = document.getElementById('loadingSpinner');
 
-        /* --- MINECRAFT COLOR PARSER --- */
         function parseMotd(raw) {
             if (!raw) return '';
             let str = raw.replace(/&([0-9a-fk-or])/gi, '§$1');
@@ -258,23 +421,23 @@
                 const platform = server.platform || server.version || 'Java';
                 
                 const motd = parseMotd(server.motd || 'A Minecraft Server');
-                
-                // === FIX: Use the REAL server_name from the API ===
                 const ip = server.server_name || 'Unknown IP';
-
                 const globalRank = filteredServerData.indexOf(server) + 1;
 
                 let tagClass = '';
                 if (platform.toLowerCase().includes('java')) tagClass = 'java';
                 else if (platform.toLowerCase().includes('bedrock')) tagClass = 'bedrock';
 
-                const iconChar = name.charAt(0).toUpperCase();
+                let iconHtml = `<span style="font-size:13px; font-weight:700; color:var(--primary-color);">${name.charAt(0).toUpperCase()}</span>`;
+                if (server.icon && typeof server.icon === 'string' && server.icon.trim() !== '') {
+                    iconHtml = `<img src="${server.icon}" alt="${name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"> <span style="display:none;">${name.charAt(0).toUpperCase()}</span>`;
+                }
 
                 html += `
-                    <div class="server-card" data-name="${name.toLowerCase()}">
+                    <div class="server-card" data-name="${name.toLowerCase()}" onclick="openServerModal(${index})">
                         <div class="card-row-top">
                             <div class="card-rank">#${globalRank}</div>
-                            <div class="card-icon">${iconChar}</div>
+                            <div class="card-icon">${iconHtml}</div>
                             <div class="card-name">${name}</div>
                             <div class="card-players"><i class="fas fa-users"></i> ${players}</div>
                         </div>
@@ -283,7 +446,7 @@
                             <div class="card-motd">${motd}</div>
                             <div class="card-ip">
                                 <span>${ip}</span>
-                                <button class="copy-btn" onclick="copyIP('${ip}')">
+                                <button class="copy-btn" onclick="event.stopPropagation(); copyIP('${ip}')">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
@@ -381,13 +544,11 @@
             }
         }
 
-        // --- DEBOUNCED SEARCH LISTENER ---
         function attachSearchListeners() {
             const searchInput = document.getElementById('searchInput');
             const tagFilter = document.getElementById('tagFilter');
             const platformFilter = document.getElementById('platformFilter');
 
-            // Remove any previous listeners to prevent stacking
             const newSearch = searchInput.cloneNode(true);
             const newTag = tagFilter.cloneNode(true);
             const newPlatform = platformFilter.cloneNode(true);
@@ -395,14 +556,10 @@
             tagFilter.parentNode.replaceChild(newTag, tagFilter);
             platformFilter.parentNode.replaceChild(newPlatform, platformFilter);
 
-            // Apply DEBOUNCE to the search input
             newSearch.addEventListener('input', () => {
                 clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    applyFilters();
-                }, 300); // Wait 300ms after user stops typing
+                searchTimeout = setTimeout(() => { applyFilters(); }, 300);
             });
-
             newTag.addEventListener('change', applyFilters);
             newPlatform.addEventListener('change', applyFilters);
         }
@@ -421,12 +578,90 @@
             });
         }
 
+        function openServerModal(index) {
+            currentModalIndex = index;
+            const baseServer = filteredServerData[index];
+            if (!baseServer) return;
+
+            const ip = baseServer.server_name || '';
+            const name = baseServer.display_name || baseServer.name || 'Unnamed';
+            
+            // Reset modal states
+            document.getElementById('modalServerName').innerText = name;
+            document.getElementById('modalStatusDot').className = `modal-status-dot not-found`;
+            document.getElementById('widgetContainer').innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center; width:100%;"><i class="fas fa-spinner fa-spin"></i> Loading widget...</div>';
+            document.getElementById('modalPlayersCount').innerText = '0';
+            document.getElementById('playersGrid').innerHTML = '';
+            document.getElementById('playersContainer').scrollTop = 0;
+
+            document.getElementById('serverModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            if (!ip) {
+                document.getElementById('widgetContainer').innerHTML = '<div style="color:#ff5252; padding:20px; text-align:center; width:100%;">No IP address found.</div>';
+                return;
+            }
+
+            // 1. FETCH THE WIDGET (JAVA DEFAULT)
+            // According to your docs, we add ?dark=true&rounded=true&transparent=true
+            const widgetUrl = `https://api.mcstatus.io/v2/widget/java/${ip}?dark=true&rounded=true&transparent=true`;
+            
+            const img = new Image();
+            img.onload = function() {
+                document.getElementById('widgetContainer').innerHTML = ''; // Clear loader
+                document.getElementById('widgetContainer').appendChild(img);
+            };
+            img.onerror = function() {
+                document.getElementById('widgetContainer').innerHTML = '<div style="color:#ff5252; padding:20px; text-align:center; width:100%;">Failed to load widget.</div>';
+            };
+            img.src = widgetUrl;
+
+
+            // 2. FETCH PLAYERS LIST (REAL NAMES & UUIDs)
+            fetch(`https://api.mcstatus.io/v2/status/java/${ip}`)
+                .then(res => res.json())
+                .then(data => {
+                    // Update Dot & Player Count
+                    const dot = document.getElementById('modalStatusDot');
+                    if (data.online) {
+                        dot.className = `modal-status-dot online`;
+                        document.getElementById('modalPlayersCount').innerText = data.players ? data.players.online : 0;
+                    } else {
+                        dot.className = `modal-status-dot offline`;
+                        document.getElementById('modalPlayersCount').innerText = '0';
+                    }
+
+                    // Update Players Grid
+                    const gridEl = document.getElementById('playersGrid');
+                    let pHtml = '';
+                    if (data.players && data.players.list && data.players.list.length > 0) {
+                        data.players.list.forEach(p => {
+                            pHtml += `<div class="player-item"><i class="fas fa-circle"></i> <span style="display:flex; justify-content:space-between; width:100%;"><span>${p.name}</span><span style="color:#64748b; font-size:11px; font-family:monospace;">${p.uuid}</span></span></div>`;
+                        });
+                    } else {
+                        pHtml = `<div class="no-players">No players currently online.</div>`;
+                    }
+                    gridEl.innerHTML = pHtml;
+                })
+                .catch(err => {
+                    // If raw fetch fails, widget might still work, but players list is empty
+                    document.getElementById('playersGrid').innerHTML = `<div class="no-players">Could not fetch player list.</div>`;
+                });
+        }
+
+        function closeServerModal() {
+            document.getElementById('serverModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.getElementById('serverModal').addEventListener('click', function(e) {
+            if (e.target === this) closeServerModal();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndFilter();
             window.addEventListener('scroll', checkScroll);
             window.addEventListener('resize', checkScroll);
-            
-            // Attach listeners AFTER the initial render
             setTimeout(attachSearchListeners, 100);
         });
     </script>
