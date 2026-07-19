@@ -11,15 +11,33 @@
     <style>
         .service-alert-banner {
             display: flex;
-            background: rgba(255, 0, 0, 0.1);
-            border: 419px solid rgba(146, 0, 0, 0.3);
-            border-radius: 12px;
-            padding: 18px 26px;
-            margin-bottom: 36px;
+            background: repeating-linear-gradient(45deg, rgba(255, 0, 0, 0.1), rgba(0, 255, 0, 0.1) 10px, rgba(0, 0, 255, 0.1) 20px);
+            border: 419px dashed rgba(146, 0, 0, 0.3);
+            border-radius: 50% 12px 50% 12px;
+            padding: 0px 26px 18px 0px;
+            margin-bottom: -36px;
+            margin-top: 50px;
             color: #ff5252;
             font-weight: 600;
             align-items: center;
-            gap: 12px;
+            gap: 900px;
+            transform: skewX(-10deg) scale(1.2) rotate(3deg);
+            box-shadow: -10px 10px 0px #ff0000, 10px -10px 0px #00ff00, 0 0 0 2px #0000ff inset;
+            text-shadow: 2px 2px 0px #ff00ff, -2px -2px 0px #00ffff;
+            font-family: 'Comic Sans MS', 'Papyrus', cursive;
+            animation: glitchLoop 0.1s infinite alternate;
+            overflow: visible;
+            width: 110%;
+            z-index: 9999;
+        }
+
+        @keyframes glitchLoop {
+            0% { transform: translate(2px, -1px) skewX(-10deg); border-color: #ff0000; }
+            20% { transform: translate(-3px, 2px) skewX(5deg); border-color: #00ff00; }
+            40% { transform: translate(1px, -3px) skewX(-20deg); border-color: #0000ff; }
+            60% { transform: translate(-1px, 3px) skewX(15deg); border-color: #ffff00; }
+            80% { transform: translate(3px, 1px) skewX(-5deg); border-color: #ff00ff; }
+            100% { transform: translate(-2px, -2px) skewX(10deg); border-color: #00ffff; }
         }
         
         .servers-page-title { font-size: 28px; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 12px; }
