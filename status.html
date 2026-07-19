@@ -13,7 +13,7 @@
         .service-alert-banner {
             display: none;
             background: rgba(255, 82, 82, 0.1);
-            border: 1px solid rgba(255, 82, 82, 0.3);
+            border: 2px solid rgba(255, 82, 82, 0.3);
             border-radius: 12px;
             padding: 12px 20px;
             margin-bottom: 20px;
@@ -60,7 +60,7 @@
             transition: all 0.3s ease;
         }
         
-        /* GLOWING RED STATE (If ANY node in the location is over 80%) */
+        /* GLOWING RED STATE (region has_capacity === false) */
         .region-header.danger-zone {
             border-left: 4px solid #ff5252;
             background: rgba(255, 82, 82, 0.08);
@@ -113,6 +113,22 @@
         .progress-fill.yellow { background: #ffc107; }
         .stat-row .val { font-size: 12px; font-weight: 600; min-width: 25px; text-align: right; }
 
+        .node-card.is-full { opacity: 0.55; }
+        .node-card.is-pinging { opacity: 0.45; }
+        .node-card.is-pinging .stats-loading-note {
+            animation: pulseLatency 1.2s ease-in-out infinite;
+        }
+        @keyframes pulseLatency {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+        .node-full-badge {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            color: #ff5252; background: rgba(255,82,82,0.15);
+            border: 1px solid rgba(255,82,82,0.3); border-radius: 20px;
+            padding: 2px 8px; margin-left: 6px;
+        }
+
         /* --- LANDSCAPE MODAL --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -153,6 +169,7 @@
         .stats-cell span:last-child { font-weight: 600; font-size: 14px; }
         .stats-cell span.green { color: var(--primary-color); }
         .stats-cell span.yellow { color: #ffc107; }
+        .stats-cell span.red { color: #ff5252; }
 
         /* --- HISTORY DOTS & INCIDENTS --- */
         .modal-history-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -253,28 +270,62 @@
             { name: "Solana API", description: "Blockchain network and cryptocurrency transactions", url: "https://api.mainnet-beta.solana.com" }
         ];
 
+        // Maps the availability endpoint's location "name" field to display config.
+        // The endpoint's own "description" field also has the human-readable name,
+        // but we keep this map so flags/order stay under our control.
+        const locationConfig = {
+            'free.frankfurt': { flag: 'uk.png', displayName: 'London, England' },
+            'free.newyork': { flag: 'us.png', displayName: 'New York, USA' },
+            'free.singapore': { flag: 'sg.png', displayName: 'Singapore, Asia' }
+        };
+        const order = ['free.frankfurt', 'free.newyork', 'free.singapore'];
+
         async function loadStatusData() {
             const contentDiv = document.getElementById('statusContent');
             const servicesDiv = document.getElementById('servicesGrid');
             const alertBanner = document.getElementById('alertBanner');
             
-            contentDiv.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:40px;">Fetching data...</div>';
+            contentDiv.innerHTML = '<div style="text-align:center; padding:60px 0;"><i class="fas fa-circle-notch fa-spin" style="color:var(--text-muted); font-size:20px;"></i></div>';
             servicesDiv.innerHTML = '';
 
             try {
-                const [liveResponse, historyResponse] = await Promise.all([
-                    fetch('https://api.mcserverhost.com/status'),
-                    fetch('https://api.maximerix.dev/mcsh/outages/data')
+                // Fetch the two sources needed for the node grid itself first, so we can
+                // render nodes immediately. The outage-history API (uptime/incidents) is
+                // fetched in parallel too, but we don't block the initial render on it —
+                // cards start grayed (.is-pinging) and ungray once history data lands.
+                // A timeout guards against this endpoint hanging indefinitely, which would
+                // otherwise leave every card gray forever.
+                function fetchWithTimeout(url, ms) {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), ms);
+                    return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+                }
+
+                const historyPromise = fetchWithTimeout('https://api.maximerix.dev/mcsh/status', 8000)
+                    .then(r => r.ok ? r.json() : Promise.reject(new Error('History API error')))
+                    .catch(err => {
+                        console.error('History fetch failed or timed out:', err);
+                        return { regions: [] };
+                    });
+
+                const [liveResponse, availResponse] = await Promise.all([
+                    fetchWithTimeout('https://api.mcserverhost.com/status', 10000),
+                    fetchWithTimeout('https://api.mcserverhost.com/user/locations/availability', 10000)
                 ]);
 
                 if (!liveResponse.ok) throw new Error('Live API error');
-                if (!historyResponse.ok) throw new Error('History API error');
+                if (!availResponse.ok) throw new Error('Availability API error');
 
                 const liveData = await liveResponse.json();
-                const historyData = await historyResponse.json();
+                const availData = await availResponse.json();
 
-                const nodes = liveData.nodes || [];
                 const apiServices = liveData.services || [];
+                const liveNodes = liveData.nodes || [];
+                const locations = availData.locations || [];
+
+                // has_capacity is only available on the availability endpoint, keyed by location name.
+                const capacityByLocation = {};
+                locations.forEach(l => { capacityByLocation[l.name] = l.has_capacity; });
 
                 // 1. RENDER SERVICES
                 let sHtml = '';
@@ -299,59 +350,35 @@
                 servicesDiv.innerHTML = sHtml;
                 isDown ? alertBanner.classList.add('active') : alertBanner.classList.remove('active');
 
-                // 2. RENDER NODES (MERGED DATA)
-                if (!nodes || nodes.length === 0) {
-                    contentDiv.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:40px;">No nodes found.</div>`;
+                // 2. RENDER LOCATIONS/NODES from the live /status endpoint (has real latency_ms).
+                //    has_capacity for the danger-zone badge comes from the availability endpoint.
+                if (!liveNodes || liveNodes.length === 0) {
+                    contentDiv.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:40px;">No locations found.</div>`;
                     return;
                 }
 
                 let html = '';
-                const locationConfig = {
-                    'free.frankfurt': { flag: 'uk.png', displayName: 'London, England' },
-                    'free.newyork': { flag: 'us.png', displayName: 'New York, USA' },
-                    'free.singapore': { flag: 'sg.png', displayName: 'Singapore, Asia' }
-                };
-                const order = ['free.frankfurt', 'free.newyork', 'free.singapore'];
-
                 allNodesData = [];
 
                 for (const locKey of order) {
-                    const locNodes = nodes.filter(node => node.location === locKey);
+                    const locNodes = liveNodes.filter(n => n.location === locKey);
                     if (locNodes.length === 0) continue;
 
                     const config = locationConfig[locKey];
                     const flagFile = config ? config.flag : '';
                     const displayName = config ? config.displayName : locKey.replace('free.', '');
 
-                    // --- DETERMINE IF THE REGION SHOULD GLOW RED ---
-                    let isDangerZone = false;
-                    let dangerReason = "";
-
-                    // Check 1: Is the location empty?
-                    if (locNodes.length === 0) {
-                        isDangerZone = true;
-                        dangerReason = "No Nodes Found";
-                    } else {
-                        // Check 2: Is ANY node in this location over 80% on CPU, Memory OR Disk?
-                        locNodes.forEach(node => {
-                            const cpu = node.cpu_percent ?? 0;
-                            const ram = node.ram_percent ?? 0;
-                            const disk = node.disk_percent ?? 0;
-                            
-                            // If any of these are over 80%, flag the whole region
-                            if (cpu > 80 || ram > 80 || disk > 80) {
-                                isDangerZone = true;
-                                dangerReason = "High Resource Usage";
-                            }
-                        });
-                    }
+                    // Danger-zone is driven directly by the API's has_capacity flag,
+                    // i.e. whether this location can actually accept new free servers.
+                    const isDangerZone = capacityByLocation[locKey] === false;
+                    const dangerReason = "Location Full";
 
                     html += `
                         <div class="region-header ${isDangerZone ? 'danger-zone' : ''}">
                             <div class="region-left">
                                 ${flagFile ? `<img src="assets/${flagFile}" alt="${locKey}" style="width: 24px; height: 16px; border-radius: 2px; object-fit: cover;">` : ''}
                                 <div>
-                                    <h2>${displayName} <span class="load-warning-badge"><i class="fas fa-triangle-exclamation"></i> ${dangerReason}</span></h2>
+                                    <h2>${displayName} ${isDangerZone ? `<span class="load-warning-badge"><i class="fas fa-triangle-exclamation"></i> ${dangerReason}</span>` : ''}</h2>
                                     <p>${locNodes.length} nodes monitored</p>
                                 </div>
                             </div>
@@ -362,37 +389,24 @@
                     locNodes.forEach(node => {
                         const nodeName = node.node_name ? node.node_name.split('.')[0] : 'Unknown';
                         const isOnline = node.status === 'online';
+                        const isFull = node.is_full === true;
                         const cpu = Math.round(node.cpu_percent || 0);
                         const ram = Math.round(node.ram_percent || 0);
                         const disk = Math.round(node.disk_percent || 0);
-                        const latency = node.latency_ms ? Math.round(node.latency_ms) : '--';
+                        const latency = (node.latency_ms !== undefined && node.latency_ms !== null) ? Math.round(node.latency_ms) : null;
 
-                        // MERGE HISTORY DATA
-                        let historyNode = null;
+                        // Uptime/incidents come from the outage-history API, fetched in
+                        // parallel above. It isn't guaranteed to have landed yet, so nodes
+                        // render now with placeholders and get patched in below once it does.
                         let incidents = [];
                         let uptimeOverall = '--';
-                        let isFull = false;
-
-                        if (historyData.regions) {
-                            for (const region of historyData.regions) {
-                                const found = region.nodes?.find(n => 
-                                    n.name.toLowerCase() === nodeName.toLowerCase()
-                                );
-                                if (found) {
-                                    historyNode = found;
-                                    incidents = found.incidentEvents90d || [];
-                                    uptimeOverall = found.uptimeOverall || '--';
-                                    isFull = found.isFull || false;
-                                    break;
-                                }
-                            }
-                        }
 
                         const colorClass = (val) => val > 75 ? 'red' : (val > 50 ? 'yellow' : 'green');
                         const statusColor = isOnline ? 'var(--primary-color)' : '#ff5252';
 
                         allNodesData.push({ 
                             name: nodeName, 
+                            hostname: node.node_name,
                             displayName: nodeName, 
                             regionDisplay: displayName,
                             isOnline, 
@@ -407,12 +421,13 @@
                         });
 
                         html += `
-                            <div class="node-card" onclick="openModal('${nodeName}')">
+                            <div class="node-card ${isFull ? 'is-full' : ''} is-pinging" id="node-card-${nodeName}" onclick="openModal('${nodeName}')">
                                 <div class="node-top">
                                     <div class="node-name">
-                                        <i class="fas ${isOnline ? 'fa-circle' : 'fa-circle'}" style="color:${statusColor};"></i> 
+                                        <i class="fas fa-circle" style="color:${statusColor};"></i> 
                                         ${nodeName}
-                                        <span>${latency}ms</span>
+                                        <span>${latency !== null ? latency + 'ms' : '--ms'}</span>
+                                        ${isFull ? '<span class="node-full-badge">Full</span>' : ''}
                                     </div>
                                     <div style="font-weight:600; font-size:14px; color:${statusColor};">${isOnline ? 'Online' : 'Offline'}</div>
                                 </div>
@@ -429,6 +444,34 @@
                 }
 
                 contentDiv.innerHTML = html;
+
+                // Nodes are visible now (grayed via .is-pinging) with placeholder uptime.
+                // Patch in real uptime/incidents once the history API resolves (or times
+                // out / fails, in which case historyPromise still resolves with empty data
+                // via the .catch above, so cards always ungray).
+                historyPromise.then(historyData => {
+                    allNodesData.forEach(n => {
+                        for (const region of (historyData.regions || [])) {
+                            const found = region.nodes?.find(hn => 
+                                hn.monitorTarget && hn.monitorTarget.toLowerCase() === n.hostname.toLowerCase()
+                            );
+                            if (found) {
+                                n.incidents = found.incidentEvents90d || [];
+                                n.uptimeOverall = found.uptimeOverall || '--';
+                                break;
+                            }
+                        }
+                        const card = document.getElementById(`node-card-${n.name}`);
+                        if (card) card.classList.remove('is-pinging');
+                    });
+                }).catch(err => {
+                    // Safety net in case something inside the .then above throws.
+                    console.error('History patch failed:', err);
+                    allNodesData.forEach(n => {
+                        const card = document.getElementById(`node-card-${n.name}`);
+                        if (card) card.classList.remove('is-pinging');
+                    });
+                });
 
             } catch (error) {
                 console.error('❌ Fetch Error:', error);
@@ -456,14 +499,32 @@
             }
 
             const statusColor = nodeData.isOnline ? 'var(--primary-color)' : '#ff5252';
+
+            // Sum actual incident durations for a real 90-day downtime figure.
+            const totalDownSec = nodeData.incidents.reduce((sum, inc) => sum + (inc.durationSeconds || 0), 0);
+            let downtimeStr;
+            if (totalDownSec === 0) {
+                downtimeStr = '0s';
+            } else if (totalDownSec < 60) {
+                downtimeStr = `${totalDownSec}s`;
+            } else if (totalDownSec < 3600) {
+                downtimeStr = `${Math.floor(totalDownSec / 60)}m ${totalDownSec % 60}s`;
+            } else {
+                const hrs = Math.floor(totalDownSec / 3600);
+                const mins = Math.floor((totalDownSec % 3600) / 60);
+                downtimeStr = `${hrs}h ${mins}m`;
+            }
+
+            const latencyDisplay = (nodeData.latency !== null && nodeData.latency !== undefined) ? `${nodeData.latency}ms` : '--ms';
+
             document.getElementById('modalStatsTable').innerHTML = `
                 <div class="stats-cell"><span>Overall uptime</span><span class="green">${nodeData.uptimeOverall}</span></div>
-                <div class="stats-cell"><span>Latency</span><span>${nodeData.latency}ms</span></div>
+                <div class="stats-cell"><span>Latency</span><span>${latencyDisplay}</span></div>
                 <div class="stats-cell"><span>CPU load</span><span>${nodeData.cpu}%</span></div>
                 <div class="stats-cell"><span>Memory usage</span><span>${nodeData.ram}%</span></div>
                 <div class="stats-cell"><span>Disk usage</span><span>${nodeData.disk}%</span></div>
-                <div class="stats-cell"><span>90-day downtime</span><span class="yellow">${nodeData.incidents.length > 0 ? 'Calculated by API' : '0s'}</span></div>
-                <div class="stats-cell"><span>Node full</span><span>${nodeData.isFull ? 'Yes' : 'No'}</span></div>
+                <div class="stats-cell"><span>90-day downtime</span><span class="yellow">${downtimeStr}</span></div>
+                <div class="stats-cell"><span>Node full</span><span class="${nodeData.isFull ? 'red' : ''}">${nodeData.isFull ? 'Yes' : 'No'}</span></div>
                 <div class="stats-cell"><span>90-day incidents</span><span>${nodeData.incidents.length}</span></div>
                 <div class="stats-cell" style="border-bottom:none;"><span>Status</span><span style="color:${statusColor};">${nodeData.isOnline ? 'Online' : 'Offline'}</span></div>
             `;
