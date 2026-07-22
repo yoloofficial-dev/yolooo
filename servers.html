@@ -11,11 +11,11 @@
     <style>
         .service-alert-banner {
             display: flex;
-            background: rgba(255, 82, 82, 0.1);
-            border: 1px solid rgba(255, 82, 82, 0.3);
+            background: rgba(255, 0, 0, 0.1);
+            border: 49px solid rgba(146, 0, 0, 0.3);
             border-radius: 12px;
-            padding: 12px 20px;
-            margin-bottom: 20px;
+            padding: 18px 26px;
+            margin-bottom: 36px;
             color: #ff5252;
             font-weight: 600;
             align-items: center;
@@ -163,6 +163,22 @@
         }
         .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; transform: rotate(90deg); }
 
+        /* --- THE TOGGLE BUTTON --- */
+        .view-toggle-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--text-muted);
+            padding: 6px 12px; border-radius: 30px;
+            font-size: 12px; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .view-toggle-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(0, 230, 118, 0.2); color: var(--text-main); }
+        .view-select-btn.active-view { background: rgba(0, 230, 118, 0.12); border-color: rgba(0, 230, 118, 0.3); color: var(--primary-color); }
+
+        /* --- VIEW 1: DETAILS --- */
+        #viewDetails { display: block; }
+        #viewDetails.hidden { display: none; }
+
         .motd-banner {
             width: 100%; padding: 16px 20px; border-radius: 16px;
             background: linear-gradient(135deg, rgba(0, 230, 118, 0.05), rgba(59, 130, 246, 0.05), rgba(255, 82, 82, 0.05));
@@ -176,49 +192,35 @@
         }
         .motd-text span { display: inline; }
 
-        .stat-grid {
+        .details-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
             margin-bottom: 15px;
         }
-        .stat-item {
+        .details-item {
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.04);
             border-radius: 14px; padding: 14px 16px;
             display: flex; flex-direction: column; gap: 4px;
         }
-        .stat-item.full-width { grid-column: 1 / -1; }
+        .details-item.full-width { grid-column: 1 / -1; }
 
-        .stat-label {
+        .details-label {
             font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
             display: flex; align-items: center; gap: 6px;
         }
-        .stat-label i { font-size: 12px; color: #94a3b8; }
-        .stat-value {
+        .details-label i { font-size: 12px; color: #94a3b8; }
+        .details-value {
             font-size: 15px; font-weight: 600; color: #e2e8f0;
             display: flex; align-items: center;
         }
-        
-        .stat-value.ip-container {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 12px;
-            width: 100%;
+        .details-value.ip-container {
+            display: flex; align-items: center; justify-content: flex-end; gap: 12px; width: 100%;
         }
-        .stat-value.ip-container .ip-text {
-            color: #94a3b8; font-weight: 500; word-break: break-all;
-        }
+        .details-value.ip-container .ip-text { color: #94a3b8; font-weight: 500; word-break: break-all; }
         .copy-ip-btn {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.08);
-            color: #94a3b8;
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 12px;
-            cursor: pointer; 
-            transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8;
+            border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .copy-ip-btn:hover { background: var(--primary-color); color: #0b0e1a; border-color: var(--primary-color); }
 
@@ -242,15 +244,13 @@
             display: inline-block;
         }
 
-        /* --- PLAYER SECTION --- */
+        /* --- PLAYERS LIST --- */
         .players-section {
             border-top: 1px solid rgba(255,255,255,0.04);
-            padding-top: 12px;
-            margin-top: 4px;
+            padding-top: 12px; margin-top: 4px;
         }
         .players-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
         }
         .players-header-title {
             font-size: 13px; font-weight: 600; color: #e2e8f0;
@@ -280,13 +280,18 @@
         .player-item i { font-size: 6px; color: var(--primary-color); text-shadow: 0 0 4px rgba(0, 230, 118, 0.4); }
         .no-players { color: #64748b; font-size: 13px; padding: 10px 0; }
 
+        /* --- VIEW 2: WIDGET --- */
+        #viewWidget { display: none; margin-bottom: 15px; }
+        #viewWidget.active { display: flex; justify-content: center; width: 100%; }
+        #viewWidget img { width: 100%; max-width: 100%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); display: block; }
+
         @media (max-width: 1024px) { .servers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 600px) { 
             .servers-grid { grid-template-columns: minmax(0, 1fr); } 
             .filter-bar { flex-direction: column; align-items: stretch; } 
             .filter-controls { flex-direction: column; } 
             .card-row-middle, .card-row-bottom { margin-left: 0; } 
-            .stat-grid { grid-template-columns: 1fr; }
+            .details-grid { grid-template-columns: 1fr; }
             .players-grid { grid-template-columns: 1fr; }
         }
     </style>
@@ -309,7 +314,7 @@
 
         <div class="service-alert-banner" id="alertBanner">
             <i class="fas fa-triangle-exclamation"></i>
-            <span>Server list is still under development, it might show fake ip address instead of real ip address.</span>
+            <span>YOLO IS STILL EDITING THIS TAB..........</span>
         </div>
 
         <div class="filter-bar">
@@ -384,11 +389,12 @@
     </main>
 
     <footer>
-        <span>Copyright &copy; 2026. All rights reserved.</span>
+        <span>Copyright &copy; 2022. All rights reserved.</span>
         <span>Credits to Maxim75000</span>
-        <span>Not an official MCServerlist Inc. service.</span>
+        <span>Not an official MCServerHost Inc. service.</span>
     </footer>
 
+    <!-- MODAL -->
     <div class="modal-overlay" id="serverModal">
         <div class="modal-box">
             <div class="modal-header">
@@ -399,24 +405,41 @@
                         <span id="modalServerName">Server</span>
                     </h2>
                 </div>
-                <button class="modal-close" onclick="closeServerModal()"><i class="fas fa-times"></i></button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button class="view-toggle-btn view-select-btn" id="plainTextBtn" onclick="setView(false)">
+                        <i class="fas fa-align-left"></i> Plain Text
+                    </button>
+                    <button class="view-toggle-btn view-select-btn" id="widgetBtn" onclick="setView(true)">
+                        <i class="fas fa-image"></i> Widget
+                    </button>
+                    <button class="modal-close" onclick="closeServerModal()"><i class="fas fa-times"></i></button>
+                </div>
             </div>
 
-            <div id="modalMotdBanner" class="motd-banner">
-                <div class="motd-text" id="modalMotdText">Loading MOTD...</div>
+            <!-- VIEW 1: DETAILS -->
+            <div id="viewDetails">
+                <div id="modalMotdBanner" class="motd-banner">
+                    <div class="motd-text" id="modalMotdText">Loading MOTD...</div>
+                </div>
+                
+                <div class="details-grid" id="modalDetailsGrid"></div>
+
+                <div class="players-section">
+                    <div class="players-header">
+                        <div class="players-header-title"><i class="fas fa-users"></i> Online Players</div>
+                        <div class="players-count"><span id="modalPlayersCount">0</span> Online</div>
+                    </div>
+                    <div class="players-list-container" id="playersContainer">
+                        <div class="players-grid" id="playersGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: WIDGET -->
+            <div id="viewWidget">
+                <img id="widgetImage" src="" alt="Server Status Widget">
             </div>
             
-            <div class="stat-grid" id="modalStatsGrid"></div>
-
-            <div class="players-section">
-                <div class="players-header">
-                    <div class="players-header-title"><i class="fas fa-users"></i> Online Players</div>
-                    <div class="players-count"><span id="modalPlayersCount">0</span> Online</div>
-                </div>
-                <div class="players-list-container" id="playersContainer">
-                    <div class="players-grid" id="playersGrid"></div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -428,12 +451,12 @@
         let isEndOfList = false;
         let searchTimeout = null;
         let currentModalIndex = -1;
+        let isWidgetView = false;
 
         const grid = document.getElementById('serversGrid');
         const loaderText = document.getElementById('loaderText');
         const spinner = document.getElementById('loadingSpinner');
 
-        /* --- MINECRAFT COLOR PARSER --- */
         function parseMotd(raw) {
             if (!raw) return '';
             let str = raw.replace(/&([0-9a-fk-or])/gi, '§$1');
@@ -507,7 +530,7 @@
                         </div>
                         
                         <div class="card-row-middle">
-                            <div class="card-motd">${motd}</div>
+                            <div class="card-motd">Loading MOTD...</div>
                             <div class="card-ip">
                                 <span>${ip}</span>
                                 <button class="copy-btn" onclick="event.stopPropagation(); copyIP('${ip}')">
@@ -571,6 +594,14 @@
 
             visibleCount = 12;
             isEndOfList = false;
+
+            if (filteredServerData.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:40px; grid-column:1/-1;">No servers found.</p>';
+                loaderText.innerText = '';
+                spinner.style.display = 'none';
+                return;
+            }
+
             loaderText.innerText = filteredServerData.length > 12 ? 'Scroll down to load more...' : 'No more servers.';
             spinner.style.display = 'none';
 
@@ -630,7 +661,7 @@
 
         function copyIP(ip) {
             navigator.clipboard.writeText(ip).then(() => {
-                alert(`IP ${ip} copied!`);
+                showCopyToast(ip);
             }).catch(() => {
                 const textArea = document.createElement("textarea");
                 textArea.value = ip;
@@ -638,8 +669,58 @@
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                alert(`IP ${ip} copied!`);
+                showCopyToast(ip);
             });
+        }
+
+        let copyToastTimeout = null;
+        function showCopyToast(ip) {
+            let toast = document.getElementById('copyToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'copyToast';
+                toast.style.cssText = `
+                    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+                    background: rgba(15, 18, 30, 0.95); border: 1px solid rgba(0, 230, 118, 0.3);
+                    color: #e2e8f0; padding: 10px 18px; border-radius: 10px; font-size: 13px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 10000;
+                    opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;
+                    pointer-events: none; display: flex; align-items: center; gap: 8px;
+                `;
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `<i class="fas fa-check" style="color: var(--primary-color);"></i> Copied <span style="color: var(--primary-color); font-weight: 600;">${ip}</span>`;
+
+            clearTimeout(copyToastTimeout);
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            });
+            copyToastTimeout = setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+            }, 1800);
+        }
+
+        /* --- VIEW TOGGLE --- */
+        function setView(showWidget) {
+            isWidgetView = showWidget;
+            const details = document.getElementById('viewDetails');
+            const widget = document.getElementById('viewWidget');
+            const plainBtn = document.getElementById('plainTextBtn');
+            const widgetBtn = document.getElementById('widgetBtn');
+
+            if (isWidgetView) {
+                details.classList.add('hidden');
+                widget.classList.add('active');
+                widgetBtn.classList.add('active-view');
+                plainBtn.classList.remove('active-view');
+            } else {
+                details.classList.remove('hidden');
+                widget.classList.remove('active');
+                plainBtn.classList.add('active-view');
+                widgetBtn.classList.remove('active-view');
+            }
         }
 
         function openServerModal(index) {
@@ -647,98 +728,107 @@
             const baseServer = filteredServerData[index];
             if (!baseServer) return;
 
-            // Grab the real IP from the base server data
             const ip = baseServer.server_name || '';
             const name = baseServer.display_name || baseServer.name || 'Unnamed';
-            
-            // Start loading state
+
+            const cracked = baseServer.cracked;
+            const whitelist = baseServer.whitelist;
+            const crackedLabel = (cracked === true || cracked === 'true' || cracked === 1) ? 'Enabled' : (cracked === false || cracked === 'false' || cracked === 0) ? 'Disabled' : 'Unknown';
+            const whitelistLabel = (whitelist === true || whitelist === 'true' || whitelist === 1) ? 'Enabled' : (whitelist === false || whitelist === 'false' || whitelist === 0) ? 'Disabled' : 'Unknown';
+
+            const isOnline = baseServer.online === true || (baseServer.players && baseServer.players > 0);
+            const playerCount = baseServer.players || 0;
+            const maxPlayers = baseServer.max_players || 0;
+            const rawMotd = baseServer.motd || '';
+            const version = baseServer.version || 'Unknown';
+
+            // Reset View
+            setView(false);
+
             document.getElementById('modalServerName').innerText = name;
-            document.getElementById('modalStatusDot').className = `modal-status-dot not-found`;
-            document.getElementById('modalMotdText').innerHTML = 'Pinging mcstatus.io...';
-            document.getElementById('modalPlayersCount').innerText = '...';
-            document.getElementById('modalStatsGrid').innerHTML = `
-                <div class="stat-item full-width" style="grid-column:1/-1; text-align:center; color:var(--text-muted);">
-                    <i class="fas fa-spinner fa-spin"></i> Fetching real-time server data...
+            document.getElementById('modalStatusDot').className = `modal-status-dot ${isOnline ? 'online' : 'offline'}`;
+
+            // Render MOTD directly from list data — no fetch needed
+            document.getElementById('modalMotdText').innerHTML = rawMotd ? parseMotd(rawMotd) : 'No MOTD provided.';
+            document.getElementById('modalPlayersCount').innerText = playerCount;
+
+            // Render Details Grid directly from list data
+            document.getElementById('modalDetailsGrid').innerHTML = `
+                <div class="details-item">
+                    <div class="details-label"><i class="fas fa-circle"></i> Status</div>
+                    <div class="details-value"><span class="status-pill ${isOnline ? 'online' : 'offline'}"><span class="status-dot"></span> ${isOnline ? 'Online' : 'Offline'}</span></div>
+                </div>
+                <div class="details-item">
+                    <div class="details-label"><i class="fas fa-network-wired"></i> IP Address</div>
+                    <div class="details-value ip-container">
+                        <span class="ip-text">${ip}</span>
+                        <button class="copy-ip-btn" onclick="event.stopPropagation(); copyIP('${ip}')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="details-item">
+                    <div class="details-label"><i class="fas fa-user-group"></i> Players</div>
+                    <div class="details-value">${playerCount} <span style="color:#64748b; font-weight:400; font-size:13px;">/ ${maxPlayers}</span></div>
+                </div>
+                <div class="details-item">
+                    <div class="details-label"><i class="fas fa-code"></i> Version</div>
+                    <div class="details-value">${version}</div>
+                </div>
+                <div class="details-item">
+                    <div class="details-label"><i class="fas fa-unlock"></i> Cracked</div>
+                    <div class="details-value">${crackedLabel}</div>
+                </div>
+                <div class="details-item">
+                    <div class="details-label"><i class="fas fa-user-shield"></i> Whitelist</div>
+                    <div class="details-value">${whitelistLabel}</div>
+                </div>
+                <div class="details-item full-width">
+                    <div class="details-label"><i class="fas fa-tags"></i> Categories</div>
+                    <div class="details-value" style="justify-content:flex-start; flex-wrap:wrap; gap:6px;">
+                        ${baseServer.tags && baseServer.tags.length > 0 ? baseServer.tags.map(t => `<span class="cat-pill">${t}</span>`).join('') : '<span style="color:#64748b; font-weight:400;">N/A</span>'}
+                    </div>
                 </div>
             `;
-            document.getElementById('playersGrid').innerHTML = '';
-            document.getElementById('playersContainer').scrollTop = 0;
+
+            document.getElementById('playersGrid').innerHTML = '<div style="color:var(--text-muted); padding:10px; text-align:center;">Loading player list...</div>';
 
             document.getElementById('serverModal').classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            // --- FETCH FROM MCSTATUS.IO ---
             if (!ip) {
-                document.getElementById('modalMotdText').innerHTML = 'No IP address found.';
+                document.getElementById('playersGrid').innerHTML = '<div class="no-players">No players currently online.</div>';
                 return;
             }
 
+            // BONUS: try to fetch the actual named player list from mcstatus.io.
+            // This is best-effort only — if it fails, we keep the count we already have.
             fetch(`https://api.mcstatus.io/v2/status/java/${ip}`)
-                .then(res => res.json())
-                .then(data => {
-                    // Update Status Dot
-                    const dot = document.getElementById('modalStatusDot');
-                    if (data.online) {
-                        dot.className = `modal-status-dot online`;
-                    } else {
-                        dot.className = `modal-status-dot offline`;
-                    }
-
-                    // Update MOTD
-                    document.getElementById('modalMotdText').innerHTML = data.motd ? parseMotd(data.motd.clean.join('\n')) : 'No MOTD provided.';
-                    document.getElementById('modalPlayersCount').innerText = data.players ? data.players.online : 0;
-
-                    // Update Stats Grid (Real Data)
-                    document.getElementById('modalStatsGrid').innerHTML = `
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-circle"></i> Status</div>
-                            <div class="stat-value"><span class="status-pill ${data.online ? 'online' : 'offline'}"><span class="status-dot"></span> ${data.online ? 'Online' : 'Offline'}</span></div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-network-wired"></i> IP Address</div>
-                            <div class="stat-value ip-container">
-                                <span class="ip-text">${data.host || ip}</span>
-                                <button class="copy-ip-btn" onclick="event.stopPropagation(); copyIP('${data.host || ip}')">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-user-group"></i> Players</div>
-                            <div class="stat-value">${data.players ? data.players.online : 0} <span style="color:#64748b; font-weight:400; font-size:13px;">/ ${data.players ? data.players.max : 0}</span></div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-code"></i> Version</div>
-                            <div class="stat-value">${data.version ? data.version.name : 'Unknown'}</div>
-                        </div>
-                        <div class="stat-item full-width">
-                            <div class="stat-label"><i class="fas fa-tags"></i> Categories</div>
-                            <div class="stat-value" style="justify-content:flex-start; flex-wrap:wrap; gap:6px;">
-                                ${baseServer.tags && baseServer.tags.length > 0 ? baseServer.tags.map(t => `<span class="cat-pill">${t}</span>`).join('') : '<span style="color:#64748b; font-weight:400;">N/A</span>'}
-                            </div>
-                        </div>
-                    `;
-
-                    // Update Players Grid (Real Player UUIDs and Names)
-                    const gridEl = document.getElementById('playersGrid');
-                    let pHtml = '';
-                    if (data.players && data.players.list && data.players.list.length > 0) {
-                        data.players.list.forEach(p => {
-                            pHtml += `<div class="player-item"><i class="fas fa-circle"></i> <span style="display:flex; justify-content:space-between; width:100%;"><span>${p.name}</span><span style="color:#64748b; font-size:11px; font-family:monospace;">${p.uuid}</span></span></div>`;
-                        });
-                    } else {
-                        pHtml = `<div class="no-players">No players currently online.</div>`;
-                    }
-                    gridEl.innerHTML = pHtml;
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
                 })
-                .catch(err => {
-                    document.getElementById('modalMotdText').innerHTML = 'Failed to fetch data.';
-                    document.getElementById('modalStatsGrid').innerHTML = `
-                        <div class="stat-item full-width" style="grid-column:1/-1; color:#ff5252; text-align:center;">
-                            Could not connect to mcstatus.io. The server might be unreachable.
-                        </div>
-                    `;
+                .then(data => {
+                    const gridEl = document.getElementById('playersGrid');
+                    if (data.players && data.players.list && data.players.list.length > 0) {
+                        let pHtml = '';
+                        data.players.list.forEach(p => {
+                            const pname = p.name_clean || p.name_raw || 'Unknown';
+                            pHtml += `<div class="player-item"><i class="fas fa-circle"></i> <span>${pname}</span></div>`;
+                        });
+                        gridEl.innerHTML = pHtml;
+                    } else {
+                        gridEl.innerHTML = '<div class="no-players">No players currently online.</div>';
+                    }
+                })
+                .catch(() => {
+                    // Silent fallback — we already showed status/MOTD/count from list data
+                    document.getElementById('playersGrid').innerHTML = '<div class="no-players">Player names unavailable.</div>';
                 });
+
+            // PRELOAD WIDGET FOR WIDGET VIEW
+            const widgetImg = document.getElementById('widgetImage');
+            widgetImg.src = `https://api.mcstatus.io/v2/widget/java/${ip}?dark=true&rounded=true`;
         }
 
         function closeServerModal() {
