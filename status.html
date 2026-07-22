@@ -193,10 +193,24 @@
 
         @media (max-width: 1024px) { .services-grid, .node-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { 
-            .modal-box { flex-direction: column; height: auto; }
+            .modal-box { flex-direction: column; height: auto; max-height: 90vh; padding: 18px; }
             .modal-left, .modal-right { width: 100%; padding: 0; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
-            .modal-right { padding-top: 15px; max-height: none; border-bottom: none; }
+            .modal-right { padding-top: 15px; max-height: none; border-bottom: none; overflow-y: auto; }
             .stats-table { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .services-grid, .node-grid { grid-template-columns: 1fr; gap: 12px; }
+            main { padding-left: 12px; padding-right: 12px; }
+            .region-header { padding: 14px 16px; flex-wrap: wrap; gap: 8px; }
+            .node-card, .service-card { padding: 14px 16px; }
+            .node-name { flex-wrap: wrap; font-size: 14px; }
+            .stat-row .label { width: 66px; font-size: 10px; }
+            .modal-overlay { padding: 12px; }
+            .modal-box { width: 100%; padding: 14px; }
+            .modal-node-info h2 { font-size: 20px; }
+            .modal-history-row { justify-content: center; }
+            .history-dot { width: 24px; height: 24px; }
+            .incident-row { flex-wrap: wrap; }
         }
     </style>
 </head>
