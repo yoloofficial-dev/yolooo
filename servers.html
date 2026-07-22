@@ -11,24 +11,15 @@
     <style>
         .service-alert-banner {
             display: flex;
-            background: rgba(255, 0, 0, 0.1);
-            border: 49px solid rgba(146, 0, 0, 0.3);
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid rgba(255, 82, 82, 0.3);
             border-radius: 12px;
-            padding: 18px 26px;
-            margin-bottom: 36px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
             color: #ff5252;
             font-weight: 600;
             align-items: center;
             gap: 12px;
-        }
-
-        @keyframes glitchLoop {
-            0% { transform: translate(2px, -1px) skewX(-10deg); border-color: #ff0000; }
-            20% { transform: translate(-3px, 2px) skewX(5deg); border-color: #00ff00; }
-            40% { transform: translate(1px, -3px) skewX(-20deg); border-color: #0000ff; }
-            60% { transform: translate(-1px, 3px) skewX(15deg); border-color: #ffff00; }
-            80% { transform: translate(3px, 1px) skewX(-5deg); border-color: #ff00ff; }
-            100% { transform: translate(-2px, -2px) skewX(10deg); border-color: #00ffff; }
         }
         
         .servers-page-title { font-size: 28px; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 12px; }
@@ -172,20 +163,83 @@
         }
         .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; transform: rotate(90deg); }
 
-        .motd-widget-container {
-            width: 100%;
-            margin-bottom: 15px;
-            border-radius: 16px;
-            overflow: hidden;
-            background: rgba(0,0,0,0.2);
-            display: flex;
-            justify-content: center;
-            min-height: 60px; /* Prevents height collapse while loading */
+        .motd-banner {
+            width: 100%; padding: 16px 20px; border-radius: 16px;
+            background: linear-gradient(135deg, rgba(0, 230, 118, 0.05), rgba(59, 130, 246, 0.05), rgba(255, 82, 82, 0.05));
+            border: 1px solid rgba(255,255,255,0.04);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; position: relative;
         }
-        .motd-widget-container img {
+        .motd-text {
+            font-size: 14px; line-height: 1.5; color: #e2e8f0;
+            font-weight: 500; flex: 1; padding-right: 10px;
+        }
+        .motd-text span { display: inline; }
+
+        .stat-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 14px; padding: 14px 16px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .stat-item.full-width { grid-column: 1 / -1; }
+
+        .stat-label {
+            font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .stat-label i { font-size: 12px; color: #94a3b8; }
+        .stat-value {
+            font-size: 15px; font-weight: 600; color: #e2e8f0;
+            display: flex; align-items: center;
+        }
+        
+        .stat-value.ip-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
             width: 100%;
-            height: auto;
-            display: block;
+        }
+        .stat-value.ip-container .ip-text {
+            color: #94a3b8; font-weight: 500; word-break: break-all;
+        }
+        .copy-ip-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #94a3b8;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer; 
+            transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .copy-ip-btn:hover { background: var(--primary-color); color: #0b0e1a; border-color: var(--primary-color); }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 2px 12px 2px 8px; border-radius: 50px; font-size: 12px; font-weight: 600;
+        }
+        .status-pill.online { background: rgba(0, 230, 118, 0.1); color: var(--primary-color); border: 1px solid rgba(0, 230, 118, 0.2); }
+        .status-pill.offline { background: rgba(255, 82, 82, 0.1); color: #ff5252; border: 1px solid rgba(255, 82, 82, 0.2); }
+        .status-pill.not-found { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .status-pill.online .status-dot { background: var(--primary-color); box-shadow: 0 0 8px var(--primary-color); }
+        .status-pill.offline .status-dot { background: #ff5252; }
+        .status-pill.not-found .status-dot { background: #ffc107; }
+
+        .cat-pill {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.04);
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 500; color: #94a3b8;
+            display: inline-block;
         }
 
         /* --- PLAYER SECTION --- */
@@ -232,6 +286,7 @@
             .filter-bar { flex-direction: column; align-items: stretch; } 
             .filter-controls { flex-direction: column; } 
             .card-row-middle, .card-row-bottom { margin-left: 0; } 
+            .stat-grid { grid-template-columns: 1fr; }
             .players-grid { grid-template-columns: 1fr; }
         }
     </style>
@@ -254,7 +309,7 @@
 
         <div class="service-alert-banner" id="alertBanner">
             <i class="fas fa-triangle-exclamation"></i>
-            <span>YOLO IS STILL EDITING THIS TAB..........</span>
+            <span>Server list is still under development, it might show fake ip address instead of real ip address.</span>
         </div>
 
         <div class="filter-bar">
@@ -347,13 +402,12 @@
                 <button class="modal-close" onclick="closeServerModal()"><i class="fas fa-times"></i></button>
             </div>
 
-            <!-- The mcstatus.io Widget will be injected here -->
-            <div class="motd-widget-container" id="widgetContainer">
-                <div style="color:var(--text-muted); padding:20px; text-align:center; width:100%;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading widget...
-                </div>
+            <div id="modalMotdBanner" class="motd-banner">
+                <div class="motd-text" id="modalMotdText">Loading MOTD...</div>
             </div>
             
+            <div class="stat-grid" id="modalStatsGrid"></div>
+
             <div class="players-section">
                 <div class="players-header">
                     <div class="players-header-title"><i class="fas fa-users"></i> Online Players</div>
@@ -379,6 +433,7 @@
         const loaderText = document.getElementById('loaderText');
         const spinner = document.getElementById('loadingSpinner');
 
+        /* --- MINECRAFT COLOR PARSER --- */
         function parseMotd(raw) {
             if (!raw) return '';
             let str = raw.replace(/&([0-9a-fk-or])/gi, '§$1');
@@ -592,55 +647,79 @@
             const baseServer = filteredServerData[index];
             if (!baseServer) return;
 
+            // Grab the real IP from the base server data
             const ip = baseServer.server_name || '';
             const name = baseServer.display_name || baseServer.name || 'Unnamed';
             
-            // Reset modal states
+            // Start loading state
             document.getElementById('modalServerName').innerText = name;
             document.getElementById('modalStatusDot').className = `modal-status-dot not-found`;
-            document.getElementById('widgetContainer').innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center; width:100%;"><i class="fas fa-spinner fa-spin"></i> Loading widget...</div>';
-            document.getElementById('modalPlayersCount').innerText = '0';
+            document.getElementById('modalMotdText').innerHTML = 'Pinging mcstatus.io...';
+            document.getElementById('modalPlayersCount').innerText = '...';
+            document.getElementById('modalStatsGrid').innerHTML = `
+                <div class="stat-item full-width" style="grid-column:1/-1; text-align:center; color:var(--text-muted);">
+                    <i class="fas fa-spinner fa-spin"></i> Fetching real-time server data...
+                </div>
+            `;
             document.getElementById('playersGrid').innerHTML = '';
             document.getElementById('playersContainer').scrollTop = 0;
 
             document.getElementById('serverModal').classList.add('active');
             document.body.style.overflow = 'hidden';
 
+            // --- FETCH FROM MCSTATUS.IO ---
             if (!ip) {
-                document.getElementById('widgetContainer').innerHTML = '<div style="color:#ff5252; padding:20px; text-align:center; width:100%;">No IP address found.</div>';
+                document.getElementById('modalMotdText').innerHTML = 'No IP address found.';
                 return;
             }
 
-            // 1. FETCH THE WIDGET (JAVA DEFAULT)
-            // According to your docs, we add ?dark=true&rounded=true&transparent=true
-            const widgetUrl = `https://api.mcstatus.io/v2/widget/java/${ip}?dark=true&rounded=true&transparent=true`;
-            
-            const img = new Image();
-            img.onload = function() {
-                document.getElementById('widgetContainer').innerHTML = ''; // Clear loader
-                document.getElementById('widgetContainer').appendChild(img);
-            };
-            img.onerror = function() {
-                document.getElementById('widgetContainer').innerHTML = '<div style="color:#ff5252; padding:20px; text-align:center; width:100%;">Failed to load widget.</div>';
-            };
-            img.src = widgetUrl;
-
-
-            // 2. FETCH PLAYERS LIST (REAL NAMES & UUIDs)
             fetch(`https://api.mcstatus.io/v2/status/java/${ip}`)
                 .then(res => res.json())
                 .then(data => {
-                    // Update Dot & Player Count
+                    // Update Status Dot
                     const dot = document.getElementById('modalStatusDot');
                     if (data.online) {
                         dot.className = `modal-status-dot online`;
-                        document.getElementById('modalPlayersCount').innerText = data.players ? data.players.online : 0;
                     } else {
                         dot.className = `modal-status-dot offline`;
-                        document.getElementById('modalPlayersCount').innerText = '0';
                     }
 
-                    // Update Players Grid
+                    // Update MOTD
+                    document.getElementById('modalMotdText').innerHTML = data.motd ? parseMotd(data.motd.clean.join('\n')) : 'No MOTD provided.';
+                    document.getElementById('modalPlayersCount').innerText = data.players ? data.players.online : 0;
+
+                    // Update Stats Grid (Real Data)
+                    document.getElementById('modalStatsGrid').innerHTML = `
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-circle"></i> Status</div>
+                            <div class="stat-value"><span class="status-pill ${data.online ? 'online' : 'offline'}"><span class="status-dot"></span> ${data.online ? 'Online' : 'Offline'}</span></div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-network-wired"></i> IP Address</div>
+                            <div class="stat-value ip-container">
+                                <span class="ip-text">${data.host || ip}</span>
+                                <button class="copy-ip-btn" onclick="event.stopPropagation(); copyIP('${data.host || ip}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-user-group"></i> Players</div>
+                            <div class="stat-value">${data.players ? data.players.online : 0} <span style="color:#64748b; font-weight:400; font-size:13px;">/ ${data.players ? data.players.max : 0}</span></div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-code"></i> Version</div>
+                            <div class="stat-value">${data.version ? data.version.name : 'Unknown'}</div>
+                        </div>
+                        <div class="stat-item full-width">
+                            <div class="stat-label"><i class="fas fa-tags"></i> Categories</div>
+                            <div class="stat-value" style="justify-content:flex-start; flex-wrap:wrap; gap:6px;">
+                                ${baseServer.tags && baseServer.tags.length > 0 ? baseServer.tags.map(t => `<span class="cat-pill">${t}</span>`).join('') : '<span style="color:#64748b; font-weight:400;">N/A</span>'}
+                            </div>
+                        </div>
+                    `;
+
+                    // Update Players Grid (Real Player UUIDs and Names)
                     const gridEl = document.getElementById('playersGrid');
                     let pHtml = '';
                     if (data.players && data.players.list && data.players.list.length > 0) {
@@ -653,8 +732,12 @@
                     gridEl.innerHTML = pHtml;
                 })
                 .catch(err => {
-                    // If raw fetch fails, widget might still work, but players list is empty
-                    document.getElementById('playersGrid').innerHTML = `<div class="no-players">Could not fetch player list.</div>`;
+                    document.getElementById('modalMotdText').innerHTML = 'Failed to fetch data.';
+                    document.getElementById('modalStatsGrid').innerHTML = `
+                        <div class="stat-item full-width" style="grid-column:1/-1; color:#ff5252; text-align:center;">
+                            Could not connect to mcstatus.io. The server might be unreachable.
+                        </div>
+                    `;
                 });
         }
 
