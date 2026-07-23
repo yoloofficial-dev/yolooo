@@ -250,7 +250,7 @@
             <a href="index.html">HOME</a>
             <a href="status.html" class="active">STATUS</a>
             <a href="servers.html">SERVERS</a>
-            <a href="apis.html">APIs</a>
+            <a href="stats.html">STATS</a>
         </nav>
         <a href="https://mcserverhost.com" target="_blank" class="header-cta"><i class="fas fa-arrow-right"></i> WEBSITE</a>
     </header>
@@ -347,7 +347,6 @@
         return `${hrs}h ${remMins}m ago`;
     }
 
-    // Tracks the actual last-update Date for each "Last updated" element, keyed by element id.
     const sectionUpdatedTimes = {};
 
     function setSectionUpdated(elId, date) {
@@ -499,8 +498,6 @@
         const alertBanner = document.getElementById('alertBanner');
         isDown ? alertBanner.classList.add('active') : alertBanner.classList.remove('active');
 
-        // Only reset the "last updated" clock when the actual data changed,
-        // not just because a poll happened to run.
         const newValueSig = computeServicesValueSignature(apiServices);
         if (newValueSig !== servicesValueSignature || sectionUpdatedTimes['servicesUpdated'] === undefined) {
             servicesValueSignature = newValueSig;
@@ -637,8 +634,6 @@
             .join('||');
     }
 
-    // Per-region signature of actual live values (status/cpu/ram/disk/latency/full),
-    // used to decide whether a region's "last updated" clock should reset.
     const regionValueSignatures = {};
 
     function computeRegionValueSignature(locKey, nodesByLocation) {
