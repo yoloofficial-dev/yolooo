@@ -9,6 +9,10 @@
     --border-glass: rgba(255, 255, 255, 0.06);
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -25,7 +29,7 @@ body {
     background-image: radial-gradient(circle at 50% 0%, rgba(0, 245, 147, 0.03) 0%, transparent 60%);
 }
 
-/* HEADER */
+/* HEADER - PERFECTLY CENTERED */
 header {
     display: flex;
     justify-content: space-between;
@@ -33,23 +37,33 @@ header {
     padding: 20px 50px;
     border-bottom: 1px solid rgba(255,255,255,0.04);
     backdrop-filter: blur(8px);
+    position: relative; /* Anchor for absolutely centered nav */
+    width: 100%;
 }
 
 .brand {
     display: flex;
     align-items: center;
+    flex: 0 0 auto;
+    min-width: 0;
 }
 
 /* NEW LOGO STYLES */
 .header-logo {
-    height: 32px; /* Adjust this to match your actual logo size */
+    height: 32px;
     width: auto;
     display: block;
+    max-width: 160px; /* FIX: caps runaway width if the image's natural size is large */
 }
 
 .nav-links {
     display: flex;
     gap: 30px;
+    position: absolute; /* Pulls nav out of flex flow so brand/CTA width can never push it */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* FIX: also centers vertically, avoids sub-pixel drift */
+    white-space: nowrap;
 }
 
 .nav-links a {
@@ -78,6 +92,9 @@ header {
     align-items: center;
     gap: 10px;
     transition: all 0.2s ease;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-left: auto;
 }
 
 .header-cta:hover {
@@ -123,11 +140,12 @@ main {
     stroke-linejoin: round;
 }
 
-/* GRID SYSTEM */
+/* GRID SYSTEM - PERFECTLY CENTERED */
 .grid-system {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
+    justify-items: center;
 }
 
 .grid-card {
@@ -145,6 +163,7 @@ main {
     justify-content: space-between;
     min-height: 170px;
     position: relative;
+    width: 100%;
 }
 
 .grid-card:hover {
@@ -245,9 +264,164 @@ footer {
 }
 
 @media (max-width: 768px) {
-    header { padding: 15px 20px; flex-wrap: wrap; gap: 15px; }
-    .nav-links { gap: 15px; flex-wrap: wrap; justify-content: center;}
+    header { 
+        padding: 15px 20px; 
+        flex-wrap: wrap; 
+        gap: 15px; 
+        position: static;
+    }
+    .brand, .header-cta { flex: none; }
+    .nav-links { 
+        gap: 15px; 
+        flex-wrap: wrap; 
+        justify-content: center;
+        position: static;
+        transform: none; 
+        width: 100%;
+    }
     main { padding: 20px; }
-    .grid-system { grid-template-columns: 1fr; }
+    .grid-system { 
+        grid-template-columns: 1fr; 
+        justify-items: stretch;
+    }
     footer { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+}
+
+/* ===================== */
+/* STATS PAGE (stats.html) */
+/* ===================== */
+
+.page-title-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.page-title-header .page-title {
+    margin-bottom: 0px;
+}
+.endpoint-count-badge {
+    background: rgba(0, 245, 147, 0.1);
+    border: 1px solid rgba(0, 245, 147, 0.2);
+    color: var(--primary-color);
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.api-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 20px;
+}
+
+.api-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.api-card:hover {
+    border-color: rgba(0, 245, 147, 0.3);
+    transform: translateY(-6px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+.api-card .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.icon-box {
+    width: 42px;
+    height: 42px;
+    background: rgba(0, 245, 147, 0.08);
+    border: 1px solid rgba(0, 245, 147, 0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.method-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: rgba(0, 245, 147, 0.12);
+    color: var(--primary-color);
+    border: 1px solid rgba(0, 245, 147, 0.2);
+}
+
+.api-card .card-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    flex-grow: 1;
+}
+
+.url-box {
+    background: rgba(11, 13, 21, 0.6);
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    transition: border-color 0.2s;
+}
+
+.url-box:hover {
+    border-color: rgba(0, 245, 147, 0.2);
+}
+
+.url-text {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    color: #8b99b0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    color: #6d7a8f;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.copy-btn:hover {
+    color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .api-grid { grid-template-columns: 1fr; }
 }
