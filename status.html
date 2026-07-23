@@ -28,7 +28,22 @@
             font-weight: 700;
             color: var(--text-main);
             margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
         }
+
+        .section-updated {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-updated i { font-size: 10px; }
 
         .services-grid {
             display: grid;
@@ -82,6 +97,18 @@
         .region-left { display: flex; align-items: center; gap: 12px; }
         .region-left h2 { font-size: 18px; font-weight: 700; color: var(--text-main); transition: color 0.3s ease;}
         .region-left p { font-size: 13px; color: var(--text-muted); transition: color 0.3s ease;}
+
+        .region-updated {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .region-updated i { font-size: 10px; }
+        .region-header.danger-zone .region-updated { color: #ff8a8a; }
 
         .load-warning-badge {
             display: none;
@@ -211,6 +238,7 @@
             .modal-history-row { justify-content: center; }
             .history-dot { width: 24px; height: 24px; }
             .incident-row { flex-wrap: wrap; }
+            .section-heading { flex-direction: column; align-items: flex-start; gap: 4px; }
         }
     </style>
 </head>
@@ -222,7 +250,7 @@
             <a href="index.html">HOME</a>
             <a href="status.html" class="active">STATUS</a>
             <a href="servers.html">SERVERS</a>
-            <a href="stats.html">STATS</a>
+            <a href="apis.html">APIs</a>
         </nav>
         <a href="https://mcserverhost.com" target="_blank" class="header-cta"><i class="fas fa-arrow-right"></i> WEBSITE</a>
     </header>
@@ -238,7 +266,10 @@
             <span>One or more services are currently experiencing issues.</span>
         </div>
 
-        <div class="section-heading">Core Services</div>
+        <div class="section-heading">
+            <span>Core Services</span>
+            <span class="section-updated" id="servicesUpdated"><i class="fas fa-clock"></i> Last updated: --</span>
+        </div>
         <div class="services-grid" id="servicesGrid"></div>
 
         <div id="statusContent"></div>
@@ -304,6 +335,44 @@
         const targetHost = normalizeHost(staticSvc.url);
         return apiServices.find(s => normalizeHost(s.url) === targetHost);
     }
+
+    function formatElapsed(date) {
+        const secs = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+        if (secs < 60) return `${secs}s ago`;
+        const mins = Math.floor(secs / 60);
+        const remSecs = secs % 60;
+        if (mins < 60) return `${mins}m ${remSecs}s ago`;
+        const hrs = Math.floor(mins / 60);
+        const remMins = mins % 60;
+        return `${hrs}h ${remMins}m ago`;
+    }
+
+    // Tracks the actual last-update Date for each "Last updated" element, keyed by element id.
+    const sectionUpdatedTimes = {};
+
+    function setSectionUpdated(elId, date) {
+        sectionUpdatedTimes[elId] = date;
+        renderSectionUpdated(elId);
+    }
+
+    function renderSectionUpdated(elId) {
+        const el = document.getElementById(elId);
+        const date = sectionUpdatedTimes[elId];
+        if (el && date) el.innerHTML = `<i class="fas fa-clock"></i> Last updated: ${formatElapsed(date)}`;
+    }
+
+    function tickAllSectionClocks() {
+        Object.keys(sectionUpdatedTimes).forEach(elId => {
+            const el = document.getElementById(elId);
+            if (!el) {
+                delete sectionUpdatedTimes[elId];
+                return;
+            }
+            renderSectionUpdated(elId);
+        });
+    }
+
+    setInterval(tickAllSectionClocks, 1000);
 
     const locationConfig = {
         'free.frankfurt': { flag: 'uk.png', displayName: 'London, England' },
@@ -391,6 +460,17 @@
         if (latEl) latEl.textContent = latency;
     }
 
+    let servicesValueSignature = null;
+
+    function computeServicesValueSignature(apiServices) {
+        return staticServiceData.map(staticSvc => {
+            const liveSvc = findLiveService(apiServices, staticSvc);
+            const status = liveSvc ? liveSvc.status : 'offline';
+            const latency = liveSvc && liveSvc.latency_ms ? Math.round(liveSvc.latency_ms) : '';
+            return `${status}:${latency}`;
+        }).join('|');
+    }
+
     function renderServicesGrid(apiServices) {
         const servicesDiv = document.getElementById('servicesGrid');
         const newKeys = staticServiceData.map(s => s.url).join('|');
@@ -418,6 +498,14 @@
 
         const alertBanner = document.getElementById('alertBanner');
         isDown ? alertBanner.classList.add('active') : alertBanner.classList.remove('active');
+
+        // Only reset the "last updated" clock when the actual data changed,
+        // not just because a poll happened to run.
+        const newValueSig = computeServicesValueSignature(apiServices);
+        if (newValueSig !== servicesValueSignature || sectionUpdatedTimes['servicesUpdated'] === undefined) {
+            servicesValueSignature = newValueSig;
+            setSectionUpdated('servicesUpdated', new Date());
+        }
     }
 
     function buildNodeCardHtml(node, skeleton) {
@@ -516,6 +604,7 @@
                             <p>${hostnames.length} nodes monitored</p>
                         </div>
                     </div>
+                    <div class="region-updated" id="region-updated-${locKey}"><i class="fas fa-clock"></i> Last updated: --</div>
                 </div>
                 <div class="node-grid">
             `;
@@ -548,11 +637,33 @@
             .join('||');
     }
 
+    // Per-region signature of actual live values (status/cpu/ram/disk/latency/full),
+    // used to decide whether a region's "last updated" clock should reset.
+    const regionValueSignatures = {};
+
+    function computeRegionValueSignature(locKey, nodesByLocation) {
+        const entry = nodesByLocation[locKey];
+        if (!entry) return null;
+        return `${entry.isDangerZone}:` + entry.nodes.map(n =>
+            `${n.hostname}:${n.isOnline}:${n.cpu}:${n.ram}:${n.disk}:${n.latency}:${n.isFull}`
+        ).join(',');
+    }
+
+    function maybeUpdateRegionClock(locKey, nodesByLocation, now) {
+        const newValueSig = computeRegionValueSignature(locKey, nodesByLocation);
+        const elId = `region-updated-${locKey}`;
+        if (newValueSig !== regionValueSignatures[locKey] || sectionUpdatedTimes[elId] === undefined) {
+            regionValueSignatures[locKey] = newValueSig;
+            setSectionUpdated(elId, now);
+        }
+    }
+
     function renderRegionsAndNodes(nodesByLocation) {
         const contentDiv = document.getElementById('statusContent');
         const newSig = computeNodeKeysSignature(nodesByLocation);
 
         const activeLocs = order.filter(locKey => nodesByLocation[locKey] && nodesByLocation[locKey].nodes.length);
+        const now = new Date();
 
         if (renderedNodeKeys === newSig && contentDiv.children.length > 0) {
             activeLocs.forEach(locKey => {
@@ -561,6 +672,7 @@
                     const card = document.getElementById(`node-card-${node.name}`);
                     if (card) updateNodeCardDom(card, node);
                 });
+                maybeUpdateRegionClock(locKey, nodesByLocation, now);
             });
             return;
         }
@@ -579,6 +691,7 @@
                             <p>${nodes.length} nodes monitored</p>
                         </div>
                     </div>
+                    <div class="region-updated" id="region-updated-${locKey}"><i class="fas fa-clock"></i> Last updated: --</div>
                 </div>
                 <div class="node-grid">
             `;
@@ -604,6 +717,7 @@
                     const card = document.getElementById(`node-card-${node.name}`);
                     if (card) updateNodeCardDom(card, node);
                 });
+                maybeUpdateRegionClock(locKey, nodesByLocation, now);
             });
         });
     }
