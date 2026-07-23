@@ -3,80 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yolo | Stats</title>
+    <title>Yolo | API Dependencies</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-
-    <style>
-        main {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 20px;
-        }
-
-        .stats-coming-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 60px 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            transition: 0.3s;
-        }
-
-        .stats-coming-card:hover {
-            border-color: rgba(0, 245, 147, 0.2);
-            transform: translateY(-3px);
-        }
-
-        .stats-coming-card i {
-            font-size: 40px;
-            color: var(--text-muted);
-        }
-
-        .stats-coming-card p {
-            color: var(--text-muted);
-            font-size: 16px;
-            font-weight: 500;
-        }
-    </style>
 </head>
 <body>
 
     <header>
-        <div class="brand"><img src="logo.png" alt="Logo" class="header-logo"></div>
+        <div class="brand">
+            <img src="logo.png" alt="Logo" class="header-logo">
+        </div>
         <nav class="nav-links">
             <a href="index.html">HOME</a>
-            <a href="status.html" class="active">STATUS</a>
+            <a href="status.html">STATUS</a>
             <a href="servers.html">SERVERS</a>
-            <a href="apis.html">APIs</a>
+            <a href="stats.html" class="active">APIs</a>
         </nav>
         <a href="https://mcserverhost.com" target="_blank" class="header-cta"><i class="fas fa-arrow-right"></i> WEBSITE</a>
     </header>
 
     <main>
-        <div class="stats-coming-card">
-            <i class="fas fa-wrench"></i>
-            <p>Coming soon..</p>
+        <div class="page-title-header">
+            <div class="page-title">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 21h18"></path>
+                    <path d="M3 21V3"></path>
+                    <path d="M9 21v-6"></path>
+                    <path d="M15 21v-8"></path>
+                    <path d="M21 21V7"></path>
+                </svg>
+                <span>API Dependencies</span>
+            </div>
+            <div class="endpoint-count-badge">
+                <i class="fas fa-plug"></i> 14 Endpoints
+            </div>
+        </div>
+
+        <div class="api-grid">
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-server"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Grabs the full list of servers running on the network.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.maximerix.dev/mcsh/servers</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.maximerix.dev/mcsh/servers')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-microchip"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Shows RAM, CPU, DISK Usage so you can tell if its full or not.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.mcserverhost.com/status</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.mcserverhost.com/status')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-globe"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Lets us know if any regions/locations are full.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.mcserverhost.com/user/locations/availability</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.mcserverhost.com/user/locations/availability')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-chart-line"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Looks back at the last 90 days to see how reliable each node has actually been.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.maximerix.dev/mcsh/outages/data</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.maximerix.dev/mcsh/outages/data')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-network-wired"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">???????????????????????????????</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.maximerix.dev/mcsh/stats</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.maximerix.dev/mcsh/stats')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-users"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Fetches current player names and UUIDs when you pop open a server's details.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.mcstatus.io/v2/status/java/{address}</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.mcstatus.io/v2/status/java/{address}')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-id-badge"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Spits out a quick status banner so you can eyeball a server's health at a glance.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.mcstatus.io/v2/widget/java/{address}</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.mcstatus.io/v2/widget/java/{address}')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-user-tag"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Turns a player's username into their Mojang UUID so we can look them up.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.mojang.com/users/profiles/minecraft/{username}</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.mojang.com/users/profiles/minecraft/{username}')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-image"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Loads a player's skin and avatar for use in the profile tools.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://crafatar.com/avatars/{uuid}</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://crafatar.com/avatars/{uuid}')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-laptop-code"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Checks in on the main website to make sure it's still up and reachable.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://www.mcserverhost.com</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://www.mcserverhost.com')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-cloud"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Watches Cloudflare to make sure our CDN and DNS are routing traffic like they should.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.cloudflare.com</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.cloudflare.com')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-credit-card"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Double-checks Stripe is online so payments keep going through without a hitch for MCSH.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.stripe.com/v1/customers</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.stripe.com/v1/customers')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fab fa-paypal"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Keeps watch on PayPal so digital wallet checkouts don't stop working on MCSH.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.paypal.com</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.paypal.com')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div>
+                    <div class="card-top">
+                        <div class="icon-box"><i class="fas fa-coins"></i></div>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <div class="card-desc">Makes sure the Solana network's healthy for any blockchain transactions we handle for MCSH.</div>
+                </div>
+                <div class="url-box">
+                    <span class="url-text">https://api.mainnet-beta.solana.com</span>
+                    <button class="copy-btn" onclick="copyUrl(this, 'https://api.mainnet-beta.solana.com')" title="Copy URL">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
         </div>
     </main>
 
     <footer>
         <span>Copyright &copy; 2026. All rights reserved.</span>
-        <span>Credits to Maxim75000</span>
+        <p style="margin:0">
+            Credits to <a href="https://maximerix.dev" style="color: inherit;text-decoration: none;">MaximeriX</a>
+        </p>
         <span>Not an official MCServerlist Inc. service.</span>
     </footer>
 
+    <script>
+        function copyUrl(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const icon = btn.querySelector('i');
+                icon.className = 'fas fa-check';
+                icon.style.color = 'var(--primary-color)';
+                setTimeout(() => {
+                    icon.className = 'far fa-copy';
+                    icon.style.color = '';
+                }, 1500);
+            });
+        }
+    </script>
 </body>
 </html>
