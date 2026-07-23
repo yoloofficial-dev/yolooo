@@ -113,7 +113,6 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.05); border-top: 3px solid var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- PREMIUM GLASSMORPHISM MODAL --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
@@ -163,7 +162,6 @@
         }
         .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; transform: rotate(90deg); }
 
-        /* --- THE TOGGLE BUTTON --- */
         .view-toggle-btn {
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.06);
@@ -175,7 +173,6 @@
         .view-toggle-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(0, 230, 118, 0.2); color: var(--text-main); }
         .view-select-btn.active-view { background: rgba(0, 230, 118, 0.12); border-color: rgba(0, 230, 118, 0.3); color: var(--primary-color); }
 
-        /* --- VIEW 1: DETAILS --- */
         #viewDetails { display: block; }
         #viewDetails.hidden { display: none; }
 
@@ -244,7 +241,6 @@
             display: inline-block;
         }
 
-        /* --- PLAYERS LIST --- */
         .players-section {
             border-top: 1px solid rgba(255,255,255,0.04);
             padding-top: 12px; margin-top: 4px;
@@ -280,7 +276,6 @@
         .player-item i { font-size: 6px; color: var(--primary-color); text-shadow: 0 0 4px rgba(0, 230, 118, 0.4); }
         .no-players { color: #64748b; font-size: 13px; padding: 10px 0; }
 
-        /* --- VIEW 2: WIDGET --- */
         #viewWidget { display: none; margin-bottom: 15px; }
         #viewWidget.active { display: flex; justify-content: center; width: 100%; }
         #viewWidget img { width: 100%; max-width: 100%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); display: block; }
@@ -395,7 +390,6 @@
         <span>Not an official MCServerHost Inc. service.</span>
     </footer>
 
-    <!-- MODAL -->
     <div class="modal-overlay" id="serverModal">
         <div class="modal-box">
             <div class="modal-header">
@@ -417,7 +411,6 @@
                 </div>
             </div>
 
-            <!-- VIEW 1: DETAILS -->
             <div id="viewDetails">
                 <div id="modalMotdBanner" class="motd-banner">
                     <div class="motd-text" id="modalMotdText">Loading MOTD...</div>
@@ -436,7 +429,6 @@
                 </div>
             </div>
 
-            <!-- VIEW 2: WIDGET -->
             <div id="viewWidget">
                 <img id="widgetImage" src="" alt="Server Status Widget">
             </div>
@@ -703,7 +695,6 @@
             }, 1800);
         }
 
-        /* --- VIEW TOGGLE --- */
         function setView(showWidget) {
             isWidgetView = showWidget;
             const details = document.getElementById('viewDetails');
@@ -743,17 +734,14 @@
             const rawMotd = baseServer.motd || '';
             const version = baseServer.version || 'Unknown';
 
-            // Reset View
             setView(false);
 
             document.getElementById('modalServerName').innerText = name;
             document.getElementById('modalStatusDot').className = `modal-status-dot ${isOnline ? 'online' : 'offline'}`;
 
-            // Render MOTD directly from list data — no fetch needed
             document.getElementById('modalMotdText').innerHTML = rawMotd ? parseMotd(rawMotd) : 'No MOTD provided.';
             document.getElementById('modalPlayersCount').innerText = playerCount;
 
-            // Render Details Grid directly from list data
             document.getElementById('modalDetailsGrid').innerHTML = `
                 <div class="details-item">
                     <div class="details-label"><i class="fas fa-circle"></i> Status</div>
@@ -802,8 +790,6 @@
                 return;
             }
 
-            // BONUS: try to fetch the actual named player list from mcstatus.io.
-            // This is best-effort only — if it fails, we keep the count we already have.
             fetch(`https://api.mcstatus.io/v2/status/java/${ip}`)
                 .then(res => {
                     if (!res.ok) throw new Error('Network response was not ok');
@@ -823,11 +809,9 @@
                     }
                 })
                 .catch(() => {
-                    // Silent fallback — we already showed status/MOTD/count from list data
                     document.getElementById('playersGrid').innerHTML = '<div class="no-players">Player names unavailable.</div>';
                 });
 
-            // PRELOAD WIDGET FOR WIDGET VIEW
             const widgetImg = document.getElementById('widgetImage');
             widgetImg.src = `https://api.mcstatus.io/v2/widget/java/${ip}?dark=true&rounded=true`;
         }
